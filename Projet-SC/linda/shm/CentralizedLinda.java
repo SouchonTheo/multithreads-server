@@ -32,8 +32,8 @@ public class CentralizedLinda implements Linda {
 		nbTakeWaiting = 0;
 	}
 
-	private void addCallback(Tuple t, Linda.eventMode mode, Callback callback) {
-		Map<Linda.eventMode, Vector<Callback>> mapEventMode = this.callbacksRegistered.get(t);
+	private void addCallback(Tuple tupleTemplate, Linda.eventMode mode, Callback callback) {
+		Map<Linda.eventMode, Vector<Callback>> mapEventMode = this.callbacksRegistered.get(tupleTemplate);
 		Vector<Callback> vectorCallback = new Vector<Callback>();
 		if (mapEventMode == null) {
 			mapEventMode = new HashMap<Linda.eventMode, Vector<Callback>>();
@@ -46,28 +46,34 @@ public class CentralizedLinda implements Linda {
 			vectorCallback.add(callback);
 		}
 		mapEventMode.put(mode, vectorCallback);
-		this.callbacksRegistered.put(t, mapEventMode);
+		this.callbacksRegistered.put(tupleTemplate, mapEventMode);
 	}
 
-	private void removeCallback(Tuple t, Linda.eventMode mode, Callback callback) {
-		Map<Linda.eventMode, Vector<Callback>> mapEventMode = this.callbacksRegistered.get(t);
+	private void removeCallback(Tuple tupleExact, Linda.eventMode mode, Callback callback) {
+		Map<Linda.eventMode, Vector<Callback>> mapEventMode = this.callbacksRegistered.get(tupleExact);
 		Vector<Callback> vectorCallback = mapEventMode.get(mode);
 		vectorCallback.remove(callback);
 		mapEventMode.put(mode, vectorCallback);
-		this.callbacksRegistered.put(t, mapEventMode);
+		this.callbacksRegistered.put(tupleExact, mapEventMode);
 	}
 
-	private void CheckCallbacks(Tuple t, Linda.eventMode mode) {
-		Map<Linda.eventMode, Vector<Callback>> mapEventMode = this.callbacksRegistered.get(t);
-		if (mapEventMode.containsKey(mode)) {
-			Vector<Callback> vectorCallback = mapEventMode.get(mode);
-			for (Callback c : vectorCallback) {
-				c.call(t);
-				removeCallback(t, mode, c);
+	private void CheckCallbacks(Tuple tupleExact, Linda.eventMode mode) {
+		for (Tuple tupleTemplate : this.callbacksRegistered.keySet()) {
+			if (tupleTemplate.contains(tupleExact)){
+				Map<Linda.eventMode, Vector<Callback>> mapEventMode = this.callbacksRegistered.get(tupleTemplate);
+				if (mapEventMode.containsKey(mode)) {
+					Vector<Callback> vectorCallback = mapEventMode.get(mode);
+					int taille = vectorCallback.size();
+					for (int i = 0; i < taille; i++) {
+						Callback c = vectorCallback.get(i);
+						c.call(tupleExact);
+						removeCallback(tupleTemplate, mode, c);
+					}
+				}
+				if (mode.equals(Linda.eventMode.TAKE)) {
+					this.listTuples.remove(tupleExact);
+				}
 			}
-		}
-		if (mode.equals(Linda.eventMode.TAKE)) {
-			this.listTuples.remove(t);
 		}
 	}
 
@@ -79,8 +85,7 @@ public class CentralizedLinda implements Linda {
 		if (this.nbReadWaiting > 0) {
 			int size = this.readConditions.size();
 			for (int i = 0 ; i < size ; i++) {
-				Condition cond = this.readConditions.get(0);
-				cond.signal();
+				this.readConditions.get(0).signal();
 				this.readConditions.remove(0);
 			}
 		} // Puis tous les callbacks en read
@@ -97,8 +102,7 @@ public class CentralizedLinda implements Linda {
 		if ((this.nbReadWaiting == 0) && (this.nbTakeWaiting > 0)) {
 			int size = this.takeConditions.size();
 			for (int i = 0 ; i < size ; i++) {
-				Condition cond = this.takeConditions.get(0);
-				cond.signal();
+				this.takeConditions.get(0).signal();
 				this.takeConditions.remove(0);
 			}
 		}
@@ -180,7 +184,7 @@ public class CentralizedLinda implements Linda {
 	public Tuple tryTake(Tuple template) {
 		monitor.lock();
 		Tuple ret = null;
-		int i = this.listTuples.size();
+		int i = this.listTuples.size() - 1;
 		Tuple t = null;
 		while (ret == null && i > 0) {
 			t = this.listTuples.get(i);
@@ -198,7 +202,7 @@ public class CentralizedLinda implements Linda {
 	public Tuple tryRead(Tuple template) {
 		monitor.lock();
 		Tuple ret = null;
-		int i = this.listTuples.size();
+		int i = this.listTuples.size() - 1;
 		Tuple t = null;
 		while (ret == null && i > 0) {
 			t = this.listTuples.get(i);
@@ -257,15 +261,11 @@ public class CentralizedLinda implements Linda {
 			addCallback(template, mode, callback);
 		}
 		monitor.unlock();
-
 	}
 
 	@Override
 	public void debug(String prefix) {
-		monitor.lock();
 		System.err.println(prefix + " On entre dans debug !");
-		monitor.unlock();
-
 	}
 
 }
