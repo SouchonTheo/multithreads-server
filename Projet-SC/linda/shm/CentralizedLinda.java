@@ -19,6 +19,7 @@ public class CentralizedLinda implements Linda {
 	private ReentrantLock monitor;
 	private Vector<Condition> readConditions;
 	private Vector<Condition> takeConditions;
+	private Condition wait;
 	private int nbReadWaiting;
 	private int nbTakeWaiting;
 
@@ -66,8 +67,8 @@ public class CentralizedLinda implements Linda {
 					int taille = vectorCallback.size();
 					for (int i = 0; i < taille; i++) {
 						Callback c = vectorCallback.get(i);
-						c.call(tupleExact);
 						removeCallback(tupleTemplate, mode, c);
+						c.call(tupleExact);
 					}
 				}
 				if (mode.equals(Linda.eventMode.TAKE)) {
@@ -80,31 +81,36 @@ public class CentralizedLinda implements Linda {
 	@Override
 	public void write(Tuple t) {
 		monitor.lock();
-		this.listTuples.add(t);
-		// On vérifie les read en premiers
-		if (this.nbReadWaiting > 0) {
-			int size = this.readConditions.size();
-			for (int i = 0 ; i < size ; i++) {
-				this.readConditions.get(0).signal();
-				this.readConditions.remove(0);
+		if ((t != null) && (t.get(0) != null) && (t.get(1) != null)) {
+			this.listTuples.add(t);
+			// On vérifie les read en premiers
+			if (this.nbReadWaiting > 0) {
+				int size = this.readConditions.size();
+				for (int i = 0 ; i < size ; i++) {
+					this.readConditions.get(0).signal();
+					this.readConditions.remove(0);
+				}
+			} // Puis tous les callbacks en read
+			for (Tuple tuple : this.callbacksRegistered.keySet()) {
+				if (t.matches(tuple)) {
+					CheckCallbacks(t, Linda.eventMode.READ);
+				}
+			} // Ensuite tous les callbacks en take
+			for (Tuple tuple : this.callbacksRegistered.keySet()) {
+				if (t.matches(tuple)) {
+					CheckCallbacks(t, Linda.eventMode.TAKE);
+				}
+			} // Et enfin les take
+			if ((this.nbReadWaiting == 0) && (this.nbTakeWaiting > 0)) {
+				int size = this.takeConditions.size();
+				for (int i = 0 ; i < size ; i++) {
+					this.takeConditions.get(0).signal();
+					this.takeConditions.remove(0);
+				}
 			}
-		} // Puis tous les callbacks en read
-		for (Tuple tuple : this.callbacksRegistered.keySet()) {
-			if (t.matches(tuple)) {
-				CheckCallbacks(t, Linda.eventMode.READ);
-			}
-		} // Ensuite tous les callbacks en take
-		for (Tuple tuple : this.callbacksRegistered.keySet()) {
-			if (t.matches(tuple)) {
-				CheckCallbacks(t, Linda.eventMode.TAKE);
-			}
-		} // Et enfin les take
-		if ((this.nbReadWaiting == 0) && (this.nbTakeWaiting > 0)) {
-			int size = this.takeConditions.size();
-			for (int i = 0 ; i < size ; i++) {
-				this.takeConditions.get(0).signal();
-				this.takeConditions.remove(0);
-			}
+		} else {
+			// On peut pas rajouter null à notre espace de tuple
+			throw new IllegalStateException();
 		}
 		monitor.unlock();
 	}
