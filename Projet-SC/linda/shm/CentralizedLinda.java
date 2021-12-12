@@ -59,7 +59,7 @@ public class CentralizedLinda implements Linda {
 
 	private void CheckCallbacks(Tuple tupleExact, Linda.eventMode mode) {
 		for (Tuple tupleTemplate : this.callbacksRegistered.keySet()) {
-			if (tupleTemplate.contains(tupleExact)){
+			if (tupleTemplate.contains(tupleExact)) {
 				Map<Linda.eventMode, Vector<Callback>> mapEventMode = this.callbacksRegistered.get(tupleTemplate);
 				if (mapEventMode.containsKey(mode)) {
 					Vector<Callback> vectorCallback = mapEventMode.get(mode);
@@ -84,7 +84,7 @@ public class CentralizedLinda implements Linda {
 		// On vérifie les read en premiers
 		if (this.nbReadWaiting > 0) {
 			int size = this.readConditions.size();
-			for (int i = 0 ; i < size ; i++) {
+			for (int i = 0; i < size; i++) {
 				this.readConditions.get(0).signal();
 				this.readConditions.remove(0);
 			}
@@ -101,7 +101,7 @@ public class CentralizedLinda implements Linda {
 		} // Et enfin les take
 		if ((this.nbReadWaiting == 0) && (this.nbTakeWaiting > 0)) {
 			int size = this.takeConditions.size();
-			for (int i = 0 ; i < size ; i++) {
+			for (int i = 0; i < size; i++) {
 				this.takeConditions.get(0).signal();
 				this.takeConditions.remove(0);
 			}
@@ -118,7 +118,7 @@ public class CentralizedLinda implements Linda {
 			int i = this.listTuples.size();
 			Tuple t = null;
 			while (ret == null && i > 0) {
-				t = this.listTuples.get(i-1);
+				t = this.listTuples.get(i - 1);
 				if (t.matches(template)) {
 					this.listTuples.remove(t);
 					ret = t;
@@ -152,7 +152,7 @@ public class CentralizedLinda implements Linda {
 			int i = this.listTuples.size();
 			Tuple t = null;
 			while (ret == null && i > 0) {
-				t = this.listTuples.get(i-1);
+				t = this.listTuples.get(i - 1);
 				if (t.matches(template)) {
 					ret = t;
 					continueLoop = false;
