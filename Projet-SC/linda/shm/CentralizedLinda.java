@@ -2,6 +2,7 @@ package linda.shm;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.locks.Condition;
@@ -59,7 +60,7 @@ public class CentralizedLinda implements Linda {
 		this.callbacksRegistered.put(tupleExact, mapEventMode);
 	}
 
-	
+
 	private void CheckCallbacksRead(Tuple tupleExact) {
 		for (Tuple tupleTemplate : this.callbacksRegistered.keySet()) {
 			if (tupleTemplate.contains(tupleExact)){
@@ -75,7 +76,6 @@ public class CentralizedLinda implements Linda {
 				}
 			}
 		}
-		this.wait.signal();
 	}
 
 
@@ -85,14 +85,15 @@ public class CentralizedLinda implements Linda {
 				Map<Linda.eventMode, Vector<Callback>> mapEventMode = this.callbacksRegistered.get(tupleTemplate);
 				if (mapEventMode.containsKey(eventMode.TAKE)) {
 					Vector<Callback> vectorCallback = mapEventMode.get(eventMode.TAKE);
-					Callback c = vectorCallback.get(0);
-					removeCallback(tupleTemplate, eventMode.TAKE, c);
-					this.listTuples.remove(tupleExact);
-					c.call(tupleExact);
+					if (listTuples.contains(tupleExact)){
+						Callback c = vectorCallback.get(0);
+						removeCallback(tupleTemplate, eventMode.TAKE, c);
+						this.listTuples.remove(tupleExact);
+						c.call(tupleExact);
+					}
 				}
 			}
 		}
-		this.wait.signal();
 	}
 
 
@@ -105,8 +106,9 @@ public class CentralizedLinda implements Linda {
 			if (this.nbReadWaiting > 0) {
 				int size = this.readConditions.size();
 				for (int i = 0 ; i < size ; i++) {
-					this.readConditions.get(0).signal();
+					Condition cond = this.readConditions.get(0);
 					this.readConditions.remove(0);
+					cond.signal();
 					try {// On passe la main au read
 						this.wait.await();
 					} catch (InterruptedException e) {
@@ -117,30 +119,22 @@ public class CentralizedLinda implements Linda {
 			for (Tuple tuple : this.callbacksRegistered.keySet()) {
 				if (t.matches(tuple)) {
 					CheckCallbacksRead(t);
-					try {
-						wait.await();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
 				}
-			} // Ensuite tous les callbacks en take
-			for (Tuple tuple : this.callbacksRegistered.keySet()) {
-				if (t.matches(tuple)) {
-					CheckCallbacksTake(t);
-					try {
-						wait.await();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-			} // Et enfin les take
+			} // Ensuite tous les take
 			if ((this.nbReadWaiting == 0) && (this.nbTakeWaiting > 0)) {
 				int size = this.takeConditions.size();
 				for (int i = 0 ; i < size ; i++) {
-					this.takeConditions.get(0).signal();
+					Condition cond = this.takeConditions.get(0);
 					this.takeConditions.remove(0);
+					cond.signal();
 				}
-			}
+			} // Et enfin les callback take
+			for (Tuple tuple : this.callbacksRegistered.keySet()) {
+				if (t.matches(tuple)) {
+					CheckCallbacksTake(t);
+				}
+			} 
+			
 		} else {
 			// On peut pas rajouter null à notre espace de tuple
 			throw new IllegalStateException();
@@ -154,16 +148,13 @@ public class CentralizedLinda implements Linda {
 		Tuple ret = null;
 		boolean continueLoop = true;
 		while (continueLoop) {
-			int i = this.listTuples.size();
-			Tuple t = null;
-			while (ret == null && i > 0) {
-				t = this.listTuples.get(i-1);
-				if (t.matches(template)) {
-					this.listTuples.remove(t);
-					ret = t;
+			Iterator<Tuple> iterator = this.listTuples.iterator();
+			while (continueLoop && iterator.hasNext()) {
+				ret = iterator.next();
+				if (ret.matches(template)) {
+					this.listTuples.remove(ret);
 					continueLoop = false;
 				}
-				i--;
 			}
 			if (continueLoop) {
 				try {
@@ -188,15 +179,12 @@ public class CentralizedLinda implements Linda {
 		Tuple ret = null;
 		boolean continueLoop = true;
 		while (continueLoop) {
-			int i = this.listTuples.size();
-			Tuple t = null;
-			while (ret == null && i > 0) {
-				t = this.listTuples.get(i-1);
-				if (t.matches(template)) {
-					ret = t;
+			Iterator<Tuple> iterator = this.listTuples.iterator();
+			while (continueLoop && iterator.hasNext()) {
+				ret = iterator.next();
+				if (ret.matches(template)) {
 					continueLoop = false;
 				}
-				i--;
 			}
 			if (continueLoop) {
 				try {
@@ -213,8 +201,9 @@ public class CentralizedLinda implements Linda {
 			}
 		}
 		if (this.nbTakeWaiting > 0 && this.nbReadWaiting == 0) {
-			this.takeConditions.get(0).signal();
+			Condition cond = this.takeConditions.get(0);
 			this.takeConditions.remove(0);
+			cond.signal();
 		}
 		this.wait.signal();
 		monitor.unlock();
@@ -225,15 +214,13 @@ public class CentralizedLinda implements Linda {
 	public Tuple tryTake(Tuple template) {
 		monitor.lock();
 		Tuple ret = null;
-		int i = this.listTuples.size() - 1;
-		Tuple t = null;
-		while (ret == null && i > 0) {
-			t = this.listTuples.get(i);
-			if (t.matches(template)) {
-				this.listTuples.remove(t);
-				ret = t;
+		Iterator<Tuple> iterator = this.listTuples.iterator();
+		while (iterator.hasNext()) {
+			ret = iterator.next();
+			if (ret.matches(template)) {
+				this.listTuples.remove(ret);
+				break;
 			}
-			i--;
 		}
 		monitor.unlock();
 		return ret;
@@ -243,14 +230,13 @@ public class CentralizedLinda implements Linda {
 	public Tuple tryRead(Tuple template) {
 		monitor.lock();
 		Tuple ret = null;
-		int i = this.listTuples.size() - 1;
-		Tuple t = null;
-		while (ret == null && i > 0) {
-			t = this.listTuples.get(i);
-			if (t.matches(template)) {
-				ret = t;
+		Iterator<Tuple> iterator = this.listTuples.iterator();
+		while (iterator.hasNext()) {
+			ret = iterator.next();
+			if (ret.matches(template)) {
+				this.listTuples.remove(ret);
+				break;
 			}
-			i--;
 		}
 		monitor.unlock();
 		return ret;
@@ -306,7 +292,7 @@ public class CentralizedLinda implements Linda {
 
 	@Override
 	public void debug(String prefix) {
-		System.err.println(prefix + " On entre dans debug !");
+		System.out.println(prefix + " On entre dans debug !");
 	}
 
 }

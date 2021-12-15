@@ -13,7 +13,6 @@ public class BasicTestCallback {
     private static class MyCallback implements Callback {
         public void call(Tuple t) {
             System.out.println("CB got "+t);
-            linda.eventRegister(eventMode.TAKE, eventTiming.IMMEDIATE, cbmotif, this);
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {

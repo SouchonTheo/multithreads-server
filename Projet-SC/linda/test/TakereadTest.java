@@ -18,7 +18,7 @@ public class TakereadTest {
                 }
                 Tuple motif = new Tuple(Integer.class, String.class);
                 Tuple res = linda.read(motif);
-                System.out.println("(1) Resultat:" + res);
+                System.out.println("(1) Resultat read:" + res);
                 linda.debug("(1)");
             }
         }.start();
@@ -32,7 +32,7 @@ public class TakereadTest {
                 }
                 Tuple motif = new Tuple(Integer.class, String.class);
                 Tuple res = linda.take(motif);
-                System.out.println("(2) Resultat:" + res);
+                System.out.println("(2) Resultat take:" + res);
                 linda.debug("(2)");
             }
         }.start();

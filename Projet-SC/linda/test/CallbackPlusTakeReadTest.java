@@ -25,7 +25,6 @@ public class CallbackPlusTakeReadTest {
         linda = new linda.shm.CentralizedLinda();
         new Thread() {
             public void run() {
-                System.out.println("Take Go");
                 try {
                     Thread.sleep(2);
                 } catch (InterruptedException e) {
@@ -33,14 +32,13 @@ public class CallbackPlusTakeReadTest {
                 }
                 Tuple motif = new Tuple(Integer.class, String.class);
                 Tuple res = linda.take(motif);
-                System.out.println("Take Resultat:" + res);
+                System.out.println("(Take Results): " + res);
                 linda.debug("(Take)");
             }
         }.start();
 
         new Thread() {
             public void run() {
-                System.out.println("Read Go");
                 try {
                     Thread.sleep(2);
                 } catch (InterruptedException e) {
@@ -48,7 +46,7 @@ public class CallbackPlusTakeReadTest {
                 }
                 Tuple motif = new Tuple(Integer.class, String.class);
                 Tuple res = linda.read(motif);
-                System.out.println("Read Resultat:" + res);
+                System.out.println("(Read Resultat): " + res);
                 linda.debug("(Read)");
             }
         }.start();
@@ -76,7 +74,6 @@ public class CallbackPlusTakeReadTest {
                 Tuple t2 = new Tuple("hello", 15);
                 System.out.println("(2) write: " + t2);
                 linda.write(t2);
-                linda.debug("(2)");
 
                 Tuple t3 = new Tuple(4, "foo");
                 System.out.println("(2) write: " + t3);
