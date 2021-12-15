@@ -7,7 +7,6 @@ import linda.Linda.eventTiming;
 
 public class CallbackPlusTakeReadTest {
 
-    private static Linda linda;
     private static Tuple cbmotif;
 
     private static class MyCallback implements Callback {
@@ -22,7 +21,7 @@ public class CallbackPlusTakeReadTest {
     }
 
     public static void main(String[] a) {
-        linda = new linda.shm.CentralizedLinda();
+        final Linda linda = new linda.shm.CentralizedLinda();
         new Thread() {
             public void run() {
                 try {
@@ -31,8 +30,13 @@ public class CallbackPlusTakeReadTest {
                     e.printStackTrace();
                 }
                 Tuple motif = new Tuple(Integer.class, String.class);
+<<<<<<< Updated upstream
                 Tuple res = linda.take(motif);
                 System.out.println("(Take Results): " + res);
+=======
+                Tuple res = linda.tryTake(motif);
+                System.out.println("Take Resultat:" + res);
+>>>>>>> Stashed changes
                 linda.debug("(Take)");
             }
         }.start();
@@ -45,8 +49,13 @@ public class CallbackPlusTakeReadTest {
                     e.printStackTrace();
                 }
                 Tuple motif = new Tuple(Integer.class, String.class);
+<<<<<<< Updated upstream
                 Tuple res = linda.read(motif);
                 System.out.println("(Read Resultat): " + res);
+=======
+                Tuple res = linda.tryRead(motif);
+                System.out.println("Read Resultat:" + res);
+>>>>>>> Stashed changes
                 linda.debug("(Read)");
             }
         }.start();
@@ -64,8 +73,8 @@ public class CallbackPlusTakeReadTest {
                 cbmotif = new Tuple(Integer.class, String.class);
                 linda.eventRegister(eventMode.TAKE, eventTiming.IMMEDIATE, cbmotif, new MyCallback());
 
-                cbmotif = new Tuple(Integer.class, String.class);
-                linda.eventRegister(eventMode.READ, eventTiming.IMMEDIATE, cbmotif, new MyCallback());
+                // linda.eventRegister(eventMode.READ, eventTiming.IMMEDIATE, cbmotif, new
+                // MyCallback());
 
                 Tuple t1 = new Tuple(4, 5);
                 System.out.println("(2) write: " + t1);

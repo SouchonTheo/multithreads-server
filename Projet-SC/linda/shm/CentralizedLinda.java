@@ -60,10 +60,13 @@ public class CentralizedLinda implements Linda {
 		this.callbacksRegistered.put(tupleExact, mapEventMode);
 	}
 
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 	private void CheckCallbacksRead(Tuple tupleExact) {
 		for (Tuple tupleTemplate : this.callbacksRegistered.keySet()) {
-			if (tupleTemplate.contains(tupleExact)){
+			if (tupleTemplate.contains(tupleExact)) {
 				Map<Linda.eventMode, Vector<Callback>> mapEventMode = this.callbacksRegistered.get(tupleTemplate);
 				if (mapEventMode.containsKey(eventMode.READ)) {
 					Vector<Callback> vectorCallback = mapEventMode.get(eventMode.READ);
@@ -78,10 +81,9 @@ public class CentralizedLinda implements Linda {
 		}
 	}
 
-
 	private void CheckCallbacksTake(Tuple tupleExact) {
 		for (Tuple tupleTemplate : this.callbacksRegistered.keySet()) {
-			if (tupleTemplate.contains(tupleExact)){
+			if (tupleTemplate.contains(tupleExact)) {
 				Map<Linda.eventMode, Vector<Callback>> mapEventMode = this.callbacksRegistered.get(tupleTemplate);
 				if (mapEventMode.containsKey(eventMode.TAKE)) {
 					Vector<Callback> vectorCallback = mapEventMode.get(eventMode.TAKE);
@@ -96,7 +98,6 @@ public class CentralizedLinda implements Linda {
 		}
 	}
 
-
 	@Override
 	public void write(Tuple t) {
 		monitor.lock();
@@ -105,8 +106,13 @@ public class CentralizedLinda implements Linda {
 			// On vérifie les read en premiers
 			if (this.nbReadWaiting > 0) {
 				int size = this.readConditions.size();
+<<<<<<< Updated upstream
 				for (int i = 0 ; i < size ; i++) {
 					Condition cond = this.readConditions.get(0);
+=======
+				for (int i = 0; i < size; i++) {
+					this.readConditions.get(0).signal();
+>>>>>>> Stashed changes
 					this.readConditions.remove(0);
 					cond.signal();
 					try {// On passe la main au read
@@ -120,11 +126,31 @@ public class CentralizedLinda implements Linda {
 				if (t.matches(tuple)) {
 					CheckCallbacksRead(t);
 				}
+<<<<<<< Updated upstream
 			} // Ensuite tous les take
 			if ((this.nbReadWaiting == 0) && (this.nbTakeWaiting > 0)) {
 				int size = this.takeConditions.size();
 				for (int i = 0 ; i < size ; i++) {
 					Condition cond = this.takeConditions.get(0);
+=======
+			} // Ensuite tous les callbacks en take
+			for (Tuple tuple : this.callbacksRegistered.keySet()) {
+				if (t.matches(tuple)) {
+					CheckCallbacksTake(t);
+					/*
+					 * try {
+					 * wait.await();
+					 * } catch (InterruptedException e) {
+					 * e.printStackTrace();
+					 * }
+					 */
+				}
+			} // Et enfin les take
+			if ((this.nbReadWaiting == 0) && (this.nbTakeWaiting > 0)) {
+				int size = this.takeConditions.size();
+				for (int i = 0; i < size; i++) {
+					this.takeConditions.get(0).signal();
+>>>>>>> Stashed changes
 					this.takeConditions.remove(0);
 					cond.signal();
 				}
@@ -148,11 +174,21 @@ public class CentralizedLinda implements Linda {
 		Tuple ret = null;
 		boolean continueLoop = true;
 		while (continueLoop) {
+<<<<<<< Updated upstream
 			Iterator<Tuple> iterator = this.listTuples.iterator();
 			while (continueLoop && iterator.hasNext()) {
 				ret = iterator.next();
 				if (ret.matches(template)) {
 					this.listTuples.remove(ret);
+=======
+			int i = this.listTuples.size();
+			Tuple t = null;
+			while (ret == null && i > 0) {
+				t = this.listTuples.get(i - 1);
+				if (t.matches(template)) {
+					this.listTuples.remove(t);
+					ret = t;
+>>>>>>> Stashed changes
 					continueLoop = false;
 				}
 			}
@@ -179,10 +215,19 @@ public class CentralizedLinda implements Linda {
 		Tuple ret = null;
 		boolean continueLoop = true;
 		while (continueLoop) {
+<<<<<<< Updated upstream
 			Iterator<Tuple> iterator = this.listTuples.iterator();
 			while (continueLoop && iterator.hasNext()) {
 				ret = iterator.next();
 				if (ret.matches(template)) {
+=======
+			int i = this.listTuples.size();
+			Tuple t = null;
+			while (ret == null && i > 0) {
+				t = this.listTuples.get(i - 1);
+				if (t.matches(template)) {
+					ret = t;
+>>>>>>> Stashed changes
 					continueLoop = false;
 				}
 			}
