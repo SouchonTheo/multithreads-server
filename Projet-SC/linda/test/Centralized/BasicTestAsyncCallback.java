@@ -1,5 +1,4 @@
-
-package linda.test;
+package linda.test.Centralized;
 
 import linda.*;
 import linda.Linda.eventMode;

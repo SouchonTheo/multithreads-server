@@ -1,4 +1,4 @@
-package linda.test;
+package linda.test.Centralized;
 
 import java.util.Vector;
 

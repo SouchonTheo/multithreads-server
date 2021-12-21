@@ -1,4 +1,4 @@
-package linda.test;
+package linda.test.Client_Serveur;
 
 import java.awt.Button;
 import java.awt.FlowLayout;

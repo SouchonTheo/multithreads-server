@@ -17,6 +17,8 @@ import linda.Tuple;
  */
 public class LindaClient implements Linda {
 
+    private LindaServer lindaimpl;
+
     /**
      * Initializes the Linda implementation.
      * 
@@ -24,9 +26,6 @@ public class LindaClient implements Linda {
      *                  "rmi://localhost:4000/LindaServer" or
      *                  "//localhost:4000/LindaServer".
      */
-
-    private LindaServer lindaimpl;
-
     public LindaClient(String serverURI) {
         try {
             lindaimpl = (LindaServer) Naming.lookup(serverURI);
