@@ -1,5 +1,5 @@
 
-package linda.test;
+package linda.test.Centralized;
 
 import linda.*;
 import linda.Linda.eventMode;
@@ -30,13 +30,8 @@ public class CallbackPlusTakeReadTest {
                     e.printStackTrace();
                 }
                 Tuple motif = new Tuple(Integer.class, String.class);
-<<<<<<< Updated upstream
                 Tuple res = linda.take(motif);
                 System.out.println("(Take Results): " + res);
-=======
-                Tuple res = linda.tryTake(motif);
-                System.out.println("Take Resultat:" + res);
->>>>>>> Stashed changes
                 linda.debug("(Take)");
             }
         }.start();
@@ -49,13 +44,8 @@ public class CallbackPlusTakeReadTest {
                     e.printStackTrace();
                 }
                 Tuple motif = new Tuple(Integer.class, String.class);
-<<<<<<< Updated upstream
                 Tuple res = linda.read(motif);
                 System.out.println("(Read Resultat): " + res);
-=======
-                Tuple res = linda.tryRead(motif);
-                System.out.println("Read Resultat:" + res);
->>>>>>> Stashed changes
                 linda.debug("(Read)");
             }
         }.start();
