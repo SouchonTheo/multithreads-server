@@ -3,7 +3,7 @@ package linda.test.Client_Serveur;
 import linda.Linda;
 import linda.Tuple;
 
-public class BasiqueTest1 {
+public class BasicTest1 {
     public static void main(String[] a) {
 
         // final Linda linda = new linda.shm.CentralizedLinda();
