@@ -25,11 +25,11 @@ public class LindaClient implements Linda {
      *                  "//localhost:4000/LindaServer".
      */
 
-    private LindaServerImpl lindaimpl;
+    private LindaServer lindaimpl;
 
     public LindaClient(String serverURI) {
         try {
-            lindaimpl = (LindaServerImpl) Naming.lookup(serverURI);
+            lindaimpl = (LindaServer) Naming.lookup(serverURI);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (RemoteException e) {
