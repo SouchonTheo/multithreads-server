@@ -83,7 +83,7 @@ public class CentralizedLinda implements Linda {
 				Map<Linda.eventMode, Vector<Callback>> mapEventMode = this.callbacksRegistered.get(tupleTemplate);
 				if (mapEventMode.containsKey(eventMode.TAKE)) {
 					Vector<Callback> vectorCallback = mapEventMode.get(eventMode.TAKE);
-					if (listTuples.contains(tupleExact)){
+					if (listTuples.contains(tupleExact)) {
 						Callback c = vectorCallback.get(0);
 						removeCallback(tupleTemplate, eventMode.TAKE, c);
 						this.listTuples.remove(tupleExact);
@@ -97,12 +97,20 @@ public class CentralizedLinda implements Linda {
 	@Override
 	public void write(Tuple t) {
 		monitor.lock();
-		if ((t != null) && (t.get(0) != null) && (t.get(1) != null)) {
+		Boolean notNull = t != null;
+		Integer k = 0;
+		while (k < t.size() && notNull) {
+			if (t.get(k) == null) {
+				notNull = false;
+			}
+			k++;
+		}
+		if (notNull) {
 			this.listTuples.add(t);
 			// On vérifie les read en premiers
 			if (this.nbReadWaiting > 0) {
 				int size = this.readConditions.size();
-				for (int i = 0 ; i < size ; i++) {
+				for (int i = 0; i < size; i++) {
 					Condition cond = this.readConditions.get(0);
 					this.readConditions.remove(0);
 					cond.signal();
@@ -120,7 +128,7 @@ public class CentralizedLinda implements Linda {
 			} // Ensuite tous les take
 			if ((this.nbReadWaiting == 0) && (this.nbTakeWaiting > 0)) {
 				int size = this.takeConditions.size();
-				for (int i = 0 ; i < size ; i++) {
+				for (int i = 0; i < size; i++) {
 					Condition cond = this.takeConditions.get(0);
 					this.takeConditions.remove(0);
 					cond.signal();
@@ -130,8 +138,8 @@ public class CentralizedLinda implements Linda {
 				if (t.matches(tuple)) {
 					CheckCallbacksTake(t);
 				}
-			} 
-			
+			}
+
 		} else {
 			// On peut pas rajouter null à notre espace de tuple
 			throw new IllegalStateException();
@@ -216,11 +224,12 @@ public class CentralizedLinda implements Linda {
 			ret = iterator.next();
 			if (ret.matches(template)) {
 				this.listTuples.remove(ret);
-				break;
+				monitor.unlock();
+				return ret;
 			}
 		}
 		monitor.unlock();
-		return ret;
+		return null;
 	}
 
 	@Override
@@ -231,12 +240,12 @@ public class CentralizedLinda implements Linda {
 		while (iterator.hasNext()) {
 			ret = iterator.next();
 			if (ret.matches(template)) {
-				this.listTuples.remove(ret);
-				break;
+				monitor.unlock();
+				return ret;
 			}
 		}
 		monitor.unlock();
-		return ret;
+		return null;
 	}
 
 	@Override
