@@ -20,10 +20,11 @@ public class NbresPremiersParSimple {
         }
 
         public void run() {
-            Integer max = ((this.id + 1) * n) / nbresThreads;
+            Integer medMax = (n / 2) + (n % 2);
+            Integer max = ((this.id + 1) * medMax) / nbresThreads;
             Integer min = 2;
             if (this.id != 0) {
-                min = ((this.id * n) / nbresThreads) + 1;
+                min = ((this.id * medMax) / nbresThreads) + 1;
             }
 
             for (int i = min; i <= max; i++) {
@@ -52,6 +53,7 @@ public class NbresPremiersParSimple {
     }
 
     public static void main(String argv[]) {
+        long startTime = System.currentTimeMillis();
         n = Integer.parseInt(argv[0]);
         nbresThreads = n / 10 + n % 2;
         if (argv.length > 1) {
@@ -72,8 +74,10 @@ public class NbresPremiersParSimple {
             }
         }
 
+        long endTime = System.currentTimeMillis();
         nbresPremiers = (List<Tuple>) ld.readAll(new Tuple(Integer.class));
         System.out.println(nbresPremiers);
+        System.out.println("Total execution time: " + (endTime - startTime) * Math.pow(10, -3) + "s");
     }
 
     private static void initialize() {
