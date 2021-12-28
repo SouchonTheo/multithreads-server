@@ -16,7 +16,7 @@ public class NbresPremiersSeq {
         for (int i = 2; i < (n / 2) + (n % 2); i++) {
             delete(n, i);
         }
-        List<Tuple> nbresPremiers = (List<Tuple>) ld.readAll(new Tuple(Integer.class));
+        List<Tuple> nbresPremiers = (List<Tuple>) ld.takeAll(new Tuple(Integer.class));
         System.out.println(nbresPremiers);
     }
 

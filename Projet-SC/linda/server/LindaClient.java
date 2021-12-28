@@ -106,7 +106,7 @@ public class LindaClient implements Linda {
     public Collection<Tuple> readAll(Tuple template) {
         Collection<Tuple> ret = null;
         try {
-            lindaimpl.readAll(template);
+            ret = lindaimpl.readAll(template);
         } catch (RemoteException e) {
             e.printStackTrace();
         }

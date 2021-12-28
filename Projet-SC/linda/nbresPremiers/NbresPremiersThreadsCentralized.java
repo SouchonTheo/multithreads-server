@@ -5,7 +5,7 @@ import java.util.List;
 import linda.Linda;
 import linda.Tuple;
 
-public class NbresPremiersParSimple {
+public class NbresPremiersThreadsCentralized {
     private static Linda ld;
     private static Integer nbresThreads;
     private static Integer n;
@@ -31,7 +31,6 @@ public class NbresPremiersParSimple {
                 delete(i);
             }
         }
-
     }
 
     private static class InitializeThread extends Thread {
@@ -49,7 +48,6 @@ public class NbresPremiersParSimple {
                 ld.write(new Tuple(i));
             }
         }
-
     }
 
     public static void main(String argv[]) {

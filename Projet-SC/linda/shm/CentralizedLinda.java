@@ -252,12 +252,33 @@ public class CentralizedLinda implements Linda {
 	public Collection<Tuple> takeAll(Tuple template) {
 		monitor.lock();
 		Collection<Tuple> collectionTuples = new Vector<Tuple>();
-		for (Tuple t : this.listTuples) {
+		Tuple t = null;
+		int size = this.listTuples.size();
+		int j = 0;
+		for (int i = 0; i < size; i++) {
+			t = this.listTuples.get(j);
+			if (t.matches(template)) {
+				collectionTuples.add(t);
+				this.listTuples.remove(t);
+			} else {
+				j++;
+			}
+		}
+		/*Tuple t = null;
+		Iterator<Tuple> iterator = this.listTuples.iterator();
+		while (iterator.hasNext()) {
+			t = iterator.next();
 			if (t.matches(template)) {
 				collectionTuples.add(t);
 				this.listTuples.remove(t);
 			}
-		}
+		}*/
+		/*for (Tuple t : this.listTuples) {
+			if (t.matches(template)) {
+				collectionTuples.add(t);
+				this.listTuples.remove(t);
+			}
+		}*/
 		monitor.unlock();
 		return collectionTuples;
 	}

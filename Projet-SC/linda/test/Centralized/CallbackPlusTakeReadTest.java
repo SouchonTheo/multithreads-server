@@ -1,4 +1,3 @@
-
 package linda.test.Centralized;
 
 import linda.*;
