@@ -9,7 +9,7 @@ public class Searcher implements Runnable {
     private Linda linda;
     private Integer nbresThreads;
 
-    public Searcher(Linda linda) {
+    public Searcher(String url, Linda linda) {
         this.linda = linda;
     }
 

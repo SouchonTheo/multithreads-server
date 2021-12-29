@@ -18,17 +18,21 @@ public class Manager implements Runnable {
     private int bestvalue = Integer.MAX_VALUE; // lower is better
     private String bestresult;
 
-    private Integer nbresSearchers;
+    private Integer nbSearchers;
     private Integer nbresDone = 0;
+    private String url;
 
-    public Manager(Linda linda, String pathname, String search, int nbre) {
+
+    public Manager(Linda linda, String pathname, String search, int nbre, String url) {
         this.linda = linda;
         this.pathname = pathname;
         this.search = search;
-        this.nbresSearchers = nbre;
-        Searcher searcher;
-        for (int i = 0; i < nbresSearchers; i++) {
-            searcher = new Searcher(linda);
+        this.nbSearchers = nbre;
+        this.url = url;
+
+        for (int i = 0; i < nbSearchers; i++) {
+            Linda ld = new linda.server.LindaClient(url);
+            Searcher searcher = new Searcher(ld);
             (new Thread(searcher)).start();
         }
     }
@@ -40,6 +44,9 @@ public class Manager implements Runnable {
         linda.eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
                 new Tuple(Code.Result, this.reqUUID, String.class, Integer.class), new CbGetResult());
         linda.write(new Tuple(Code.Request, this.reqUUID, this.search));
+        linda.eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
+                new Tuple(Code.IncSearchers, this.reqUUID), new CbGetSearchers());
+        
     }
 
     private void loadData(String pathname) {
@@ -51,7 +58,7 @@ public class Manager implements Runnable {
     }
 
     private void waitForEndSearch() {
-        while (this.nbresDone != this.nbresSearchers) {
+        while (this.nbresDone != this.nbSearchers) {
             linda.take(new Tuple(Code.Searcher, "done", this.reqUUID));
             this.nbresDone++;
         }
@@ -72,6 +79,15 @@ public class Manager implements Runnable {
                     new Tuple(Code.Result, reqUUID, String.class, Integer.class), this);
         }
     }
+
+    private class CbGetSearchers implements linda.Callback{
+        public void call (Tuple t){
+            this.nbSearchers++;
+        } 
+        linda.eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
+                    new Tuple(Code.IncSearchers, reqUUID), this);
+
+    } 
 
     public void run() {
         this.loadData(pathname);
