@@ -6,7 +6,7 @@ import linda.*;
 
 public class Main {
 
-    public static String url = "//localhost:4000/LindaServer"
+    public static String url = "//localhost:4000/LindaServer";
 
     public static void main(String args[]) {
         if (args.length != 2) {
@@ -28,7 +28,7 @@ public class Main {
             if (decision.equals("oui") || decision.equals("o")) {
                 System.out.println("Combien de Searchers : ");
                 nombresSearchers = scanner.nextInt();
-                Linda linda = new linda.server.LindaClient(url);
+                linda = new linda.server.LindaClient(url);
                 manager = new Manager(linda, args[1], args[0], nombresSearchers, url);
                 (new Thread(manager)).start();
             } else {
