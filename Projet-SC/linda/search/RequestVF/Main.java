@@ -1,4 +1,4 @@
-package linda.search.Request2;
+package linda.search.RequestVF;
 
 import java.util.Scanner;
 

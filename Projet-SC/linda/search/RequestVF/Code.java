@@ -1,4 +1,4 @@
-package linda.search.Request2;
+package linda.search.RequestVF;
 
 public enum Code {
     Request, // Request, UUID, String
