@@ -74,12 +74,11 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
         String URL1;
         try {
             LindaServerImpl server = new LindaServerImpl();
-            Registry registry = LocateRegistry.createRegistry(port);
+            LocateRegistry.createRegistry(port);
             URL1 = "//" + InetAddress.getLocalHost().getHostName() + ":" + port + "/LindaServer";
             Naming.rebind(URL1, server);
             System.out.println("Le serveur est démarré sur " + URL1);
         } catch (RemoteException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (Exception exc) {
 
