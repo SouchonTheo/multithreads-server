@@ -1,9 +1,14 @@
 package linda.server;
 
+import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
 import linda.Callback;
@@ -18,6 +23,7 @@ import linda.Tuple;
 public class LindaClient implements Linda {
 
     private LindaServer lindaimpl;
+    private Registry registry;
 
     /**
      * Initializes the Linda implementation.
@@ -116,7 +122,10 @@ public class LindaClient implements Linda {
     @Override
     public void eventRegister(eventMode mode, eventTiming timing, Tuple template, Callback callback) {
         try {
-            lindaimpl.eventRegister(mode, timing, template, callback);
+            System.out.println("dans le LindaClient");
+            RemoteCallbackInterface rcb = new RemoteCallback(callback);
+            System.out.println("New callback : " + rcb + "\n");
+            lindaimpl.eventRegister(mode, timing, template, rcb);
         } catch (RemoteException e) {
             e.printStackTrace();
         }

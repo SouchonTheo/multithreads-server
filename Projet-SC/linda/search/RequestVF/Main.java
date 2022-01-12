@@ -24,18 +24,20 @@ public class Main {
         Boolean continuer = true;
         while (continuer) {
             System.out.print("Voulez vous ajouter un manager ? : ");
-            String decision = scanner.nextLine();
-            if (decision.equals("oui") || decision.equals("o")) {
+            int decision = scanner.nextInt();
+            if (decision == 1) {
                 System.out.println("Combien de Searchers : ");
                 nombresSearchers = scanner.nextInt();
                 linda = new linda.server.LindaClient(url);
                 manager = new Manager(linda, args[1], args[0], nombresSearchers, url);
                 (new Thread(manager)).start();
             } else {
-                System.out.println("Salut !");
+                System.out.println("\n\n" + decision + "\n");
+                System.out.println("Au revoir !");
                 continuer = false;
             }
         }
         scanner.close();
+        System.exit(0);
     }
 }

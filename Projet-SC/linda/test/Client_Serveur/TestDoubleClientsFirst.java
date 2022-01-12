@@ -18,7 +18,6 @@ public class TestDoubleClientsFirst {
     }
     public static void main(String[] a) {
 
-        // final Linda linda = new linda.shm.CentralizedLinda();
         final Linda linda = new linda.server.LindaClient("//localhost:4000/LindaServer");
         Tuple cbmotif = new Tuple(Integer.class, String.class);
         linda.eventRegister(eventMode.TAKE, eventTiming.IMMEDIATE, cbmotif, new MyCallback());

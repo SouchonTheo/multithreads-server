@@ -8,7 +8,6 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
-import linda.Callback;
 import linda.Linda.eventMode;
 import linda.Linda.eventTiming;
 import linda.Tuple;
@@ -59,9 +58,12 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     }
 
     @Override
-    public void eventRegister(eventMode mode, eventTiming timing, Tuple template, Callback callback)
+    public void eventRegister(eventMode mode, eventTiming timing, Tuple template, RemoteCallbackInterface rCallback)
             throws RemoteException {
-        linda.eventRegister(mode, timing, template, callback);
+        System.out.println("Dans serveur impl");
+        RemoteCallbackClient cb = new RemoteCallbackClient(rCallback);
+        linda.eventRegister(mode, timing, template, cb);
+
     }
 
     @Override
@@ -74,17 +76,15 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
         String URL1;
         try {
             LindaServerImpl server = new LindaServerImpl();
-            Registry registry = LocateRegistry.createRegistry(port);
+            LocateRegistry.createRegistry(port);
             URL1 = "//" + InetAddress.getLocalHost().getHostName() + ":" + port + "/LindaServer";
             Naming.rebind(URL1, server);
             System.out.println("Le serveur est démarré sur " + URL1);
         } catch (RemoteException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (Exception exc) {
-
+            exc.printStackTrace();
         }
-
     }
 
 }
