@@ -264,21 +264,6 @@ public class CentralizedLinda implements Linda {
 				j++;
 			}
 		}
-		/*Tuple t = null;
-		Iterator<Tuple> iterator = this.listTuples.iterator();
-		while (iterator.hasNext()) {
-			t = iterator.next();
-			if (t.matches(template)) {
-				collectionTuples.add(t);
-				this.listTuples.remove(t);
-			}
-		}*/
-		/*for (Tuple t : this.listTuples) {
-			if (t.matches(template)) {
-				collectionTuples.add(t);
-				this.listTuples.remove(t);
-			}
-		}*/
 		monitor.unlock();
 		return collectionTuples;
 	}

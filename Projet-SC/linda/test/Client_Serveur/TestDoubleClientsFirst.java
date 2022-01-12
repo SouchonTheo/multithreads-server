@@ -14,6 +14,7 @@ public class TestDoubleClientsFirst {
             } catch (InterruptedException e) {
             }
             System.out.println("CB done with " + t);
+            System.exit(0);
         }
     }
     public static void main(String[] a) {
