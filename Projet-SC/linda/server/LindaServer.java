@@ -3,7 +3,6 @@ package linda.server;
 import java.rmi.*;
 import java.util.Collection;
 
-import linda.Callback;
 import linda.Tuple;
 import linda.Linda.eventMode;
 import linda.Linda.eventTiming;

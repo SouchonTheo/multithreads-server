@@ -1,14 +1,9 @@
 package linda.server;
 
-import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
-import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
 import linda.Callback;
@@ -23,7 +18,6 @@ import linda.Tuple;
 public class LindaClient implements Linda {
 
     private LindaServer lindaimpl;
-    private Registry registry;
 
     /**
      * Initializes the Linda implementation.
