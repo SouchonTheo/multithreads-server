@@ -23,14 +23,15 @@ public class Main {
 
         Boolean continuer = true;
         while (continuer) {
-            System.out.print("Voulez vous ajouter un manager ? : ");
+            System.out.print("Voulez vous ajouter un manager ? (1 pour oui, 0 sinon) : ");
             int decision = scanner.nextInt();
             if (decision == 1) {
-                System.out.println("Combien de Searchers : ");
+                System.out.println("Combien de Searchers :");
                 nombresSearchers = scanner.nextInt();
                 linda = new linda.server.LindaClient(url);
                 manager = new Manager(linda, args[1], args[0], nombresSearchers, url);
                 (new Thread(manager)).start();
+                //manager.endSearch();
             } else {
                 System.out.println("\n\n" + decision + "\n");
                 System.out.println("Au revoir !");

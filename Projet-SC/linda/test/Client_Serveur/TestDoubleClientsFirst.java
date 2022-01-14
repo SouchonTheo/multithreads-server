@@ -14,13 +14,13 @@ public class TestDoubleClientsFirst {
             } catch (InterruptedException e) {
             }
             System.out.println("CB done with " + t);
-            System.exit(0);
+            //System.exit(0);
         }
     }
     public static void main(String[] a) {
 
         final Linda linda = new linda.server.LindaClient("//localhost:4000/LindaServer");
-        Tuple cbmotif = new Tuple(Integer.class, String.class);
+        Tuple cbmotif = new Tuple(Integer.class, String.class); 
         linda.eventRegister(eventMode.TAKE, eventTiming.IMMEDIATE, cbmotif, new MyCallback());
     }
 }

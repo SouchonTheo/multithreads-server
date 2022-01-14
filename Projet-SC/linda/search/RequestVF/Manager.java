@@ -46,7 +46,7 @@ public class Manager implements Runnable {
 
     private void loadData(String pathname) {
         try (Stream<String> stream = Files.lines(Paths.get(pathname))) {
-            stream.limit(10000).forEach(s -> linda.write(new Tuple(Code.Value, reqUUID, s.trim())));
+            stream.limit(1000).forEach(s -> linda.write(new Tuple(Code.Value, reqUUID, s.trim())));
         } catch (java.io.IOException e) {
             e.printStackTrace();
         }
@@ -119,8 +119,12 @@ public class Manager implements Runnable {
     }
 
     public void run() {
+        System.out.println("debut run");
         this.loadData(pathname);
+        System.out.println("apres load");
         this.addSearch(search);
+        System.out.println("apres search");
         this.waitForEndSearch();
+        System.out.println("fin du run");
     }
 }
