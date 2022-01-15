@@ -61,10 +61,6 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
             throws RemoteException {
         System.out.println("LSI - ER");
         RemoteCallbackClient cb = new RemoteCallbackClient(rCallback);
-        System.out.println("mode : " + mode);
-        System.out.println("timing : " + timing);
-        System.out.println("template : " + template);
-        System.out.println("rCallback : " + rCallback);
         linda.eventRegister(mode, timing, template, cb);
     }
 
