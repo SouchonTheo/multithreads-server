@@ -10,7 +10,7 @@ public class RemoteCallbackClient implements Callback {
 
     private RemoteCallbackInterface rcbi;
 
-    public RemoteCallbackClient (RemoteCallbackInterface rcbi){
+    public RemoteCallbackClient(RemoteCallbackInterface rcbi) {
         this.rcbi = rcbi;
     }
 
@@ -18,7 +18,9 @@ public class RemoteCallbackClient implements Callback {
     public void call(Tuple t) {
         try {
             this.rcbi.rCall(t);
-            UnicastRemoteObject.unexportObject(rcbi, true);
+            System.out.println("avant le exit");
+            // UnicastRemoteObject.unexportObject(rcbi, true);
+            // System.exit(0);
         } catch (RemoteException e) {
             e.printStackTrace();
         }

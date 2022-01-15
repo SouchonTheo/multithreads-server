@@ -35,7 +35,7 @@ public class Manager implements Runnable {
 
     private void addSearch(String search) {
         this.search = search;
-        System.out.println("Search " + reqUUID + " for " + this.search);
+        System.out.println("Search " + this.search);
         linda.eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
                 new Tuple(Code.Result, reqUUID, String.class, Integer.class), new CbGetResult());
         linda.write(new Tuple(Code.Request, reqUUID, this.search));
@@ -72,20 +72,31 @@ public class Manager implements Runnable {
     }
 
     private void waitForEndSearch() {
-        EndSearch t = new EndSearch();
-        t.start();
-        while (this.nbresDone < nbSearchers) {
-            linda.take(new Tuple(Code.Searcher, "done", reqUUID));
-            this.nbresDone++;
-        }
+        /*
+         * EndSearch t = new EndSearch();
+         * t.start();
+         * 
+         * while (this.nbresDone < nbSearchers) {
+         * linda.take(new Tuple(Code.Searcher, "done", reqUUID));
+         * this.nbresDone++;
+         * }
+         * System.out.println("après le while WFES");
+         * linda.take(new Tuple(Code.Request, reqUUID, String.class)); // remove query
+         * linda.takeAll(new Tuple(Code.Value, reqUUID, String.class));
+         * linda.takeAll(new Tuple(Code.Searcher, "done", reqUUID));
+         * System.out.println("query done");
+         */
+        System.out.println("START WFES");
+        linda.take(new Tuple(Code.Searcher, "done", reqUUID));
         linda.take(new Tuple(Code.Request, reqUUID, String.class)); // remove query
-        linda.takeAll(new Tuple(Code.Value, reqUUID, String.class));
-        linda.takeAll(new Tuple(Code.Searcher, "done", reqUUID));
         System.out.println("query done");
     }
 
     private class CbGetResult implements linda.Callback {
+
         public void call(Tuple t) { // [ Result, ?UUID, ?String, ?Integer ]
+            System.out.println("JE SUIS DANS LE CALL BACK");
+            System.out.println(reqUUID);
             String s = (String) t.get(2);
             Integer v = (Integer) t.get(3);
             if (v == 0) {
@@ -102,7 +113,8 @@ public class Manager implements Runnable {
                 bestresult = s;
                 System.out.println("New best (" + bestvalue + "): \"" + bestresult + "\"");
                 linda.eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
-                        new Tuple(Code.Result, reqUUID, String.class, Integer.class), this);
+                        new Tuple(Code.Result, reqUUID, String.class, Integer.class), new CbGetSearchers()); // Problem
+                System.out.println("Après ER");
             } else {
                 linda.eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
                         new Tuple(Code.Result, reqUUID, String.class, Integer.class), this);
@@ -114,17 +126,13 @@ public class Manager implements Runnable {
         public void call(Tuple t) {
             nbSearchers++;
             linda.eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
-                    new Tuple(Code.IncSearchers, reqUUID), this);
+                    new Tuple(Code.IncSearchers, reqUUID), new CbGetSearchers());
         }
     }
 
     public void run() {
-        System.out.println("debut run");
         this.loadData(pathname);
-        System.out.println("apres load");
         this.addSearch(search);
-        System.out.println("apres search");
         this.waitForEndSearch();
-        System.out.println("fin du run");
     }
 }
