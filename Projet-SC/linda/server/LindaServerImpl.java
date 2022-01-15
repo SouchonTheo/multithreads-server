@@ -4,11 +4,9 @@ import java.net.InetAddress;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
-import linda.Callback;
 import linda.Linda.eventMode;
 import linda.Linda.eventTiming;
 import linda.Tuple;
@@ -59,9 +57,11 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     }
 
     @Override
-    public void eventRegister(eventMode mode, eventTiming timing, Tuple template, Callback callback)
+    public void eventRegister(eventMode mode, eventTiming timing, Tuple template, RemoteCallbackInterface rCallback)
             throws RemoteException {
-        linda.eventRegister(mode, timing, template, callback);
+        System.out.println("LSI - ER");
+        RemoteCallbackClient cb = new RemoteCallbackClient(rCallback);
+        linda.eventRegister(mode, timing, template, cb);
     }
 
     @Override
@@ -81,9 +81,8 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
         } catch (RemoteException e) {
             e.printStackTrace();
         } catch (Exception exc) {
-
+            exc.printStackTrace();
         }
-
     }
 
 }

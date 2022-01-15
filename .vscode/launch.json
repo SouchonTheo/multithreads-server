@@ -1,0 +1,232 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Launch Current File",
+            "request": "launch",
+            "mainClass": "${file}",
+            "args": "'ability' /usr/share/dict/words"
+        },
+        {
+            "type": "java",
+            "name": "Launch NbresPremiersSeq",
+            "request": "launch",
+            "mainClass": "linda.nbresPremiers.NbresPremiersSeq",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch NbresPremiersThreadsCentralized",
+            "request": "launch",
+            "mainClass": "linda.nbresPremiers.NbresPremiersThreadsCentralized",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch NbresPremiersThreadsServer",
+            "request": "launch",
+            "mainClass": "linda.nbresPremiers.NbresPremiersThreadsServer",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch Main",
+            "request": "launch",
+            "mainClass": "linda.search.Request1.Main",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch Main(1)",
+            "request": "launch",
+            "mainClass": "linda.search.RequestVF.Main",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch Main(2)",
+            "request": "launch",
+            "mainClass": "linda.search.basic.Main",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch LindaServerImpl",
+            "request": "launch",
+            "mainClass": "linda.server.LindaServerImpl",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch BasicTest1",
+            "request": "launch",
+            "mainClass": "linda.test.Centralized.BasicTest1",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch BasicTest2",
+            "request": "launch",
+            "mainClass": "linda.test.Centralized.BasicTest2",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch BasicTestAsyncCallback",
+            "request": "launch",
+            "mainClass": "linda.test.Centralized.BasicTestAsyncCallback",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch BasicTestCallback",
+            "request": "launch",
+            "mainClass": "linda.test.Centralized.BasicTestCallback",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch CallbackPlusTakeReadTest",
+            "request": "launch",
+            "mainClass": "linda.test.Centralized.CallbackPlusTakeReadTest",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch ReadtakeTest",
+            "request": "launch",
+            "mainClass": "linda.test.Centralized.ReadtakeTest",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch TakereadTest",
+            "request": "launch",
+            "mainClass": "linda.test.Centralized.TakereadTest",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch TryRead",
+            "request": "launch",
+            "mainClass": "linda.test.Centralized.TryRead",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch TryTake",
+            "request": "launch",
+            "mainClass": "linda.test.Centralized.TryTake",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch WriteTest",
+            "request": "launch",
+            "mainClass": "linda.test.Centralized.WriteTest",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch BasicTest1(1)",
+            "request": "launch",
+            "mainClass": "linda.test.Client_Serveur.BasicTest1",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch BasicTest2(1)",
+            "request": "launch",
+            "mainClass": "linda.test.Client_Serveur.BasicTest2",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch BasicTestAsyncCallback(1)",
+            "request": "launch",
+            "mainClass": "linda.test.Client_Serveur.BasicTestAsyncCallback",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch BasicTestCallback(1)",
+            "request": "launch",
+            "mainClass": "linda.test.Client_Serveur.BasicTestCallback",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch CallbackPlusTakeReadTest(1)",
+            "request": "launch",
+            "mainClass": "linda.test.Client_Serveur.CallbackPlusTakeReadTest",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch ReadtakeTest(1)",
+            "request": "launch",
+            "mainClass": "linda.test.Client_Serveur.ReadtakeTest",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch TakereadTest(1)",
+            "request": "launch",
+            "mainClass": "linda.test.Client_Serveur.TakereadTest",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch TestDoubleClientsFirst",
+            "request": "launch",
+            "mainClass": "linda.test.Client_Serveur.TestDoubleClientsFirst",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch TestDoubleClientsSecond",
+            "request": "launch",
+            "mainClass": "linda.test.Client_Serveur.TestDoubleClientsSecond",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch TryRead(1)",
+            "request": "launch",
+            "mainClass": "linda.test.Client_Serveur.TryRead",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch TryTake(1)",
+            "request": "launch",
+            "mainClass": "linda.test.Client_Serveur.TryTake",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch WriteTest(1)",
+            "request": "launch",
+            "mainClass": "linda.test.Client_Serveur.WriteTest",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch testClientServeur",
+            "request": "launch",
+            "mainClass": "linda.test.Client_Serveur.testClientServeur",
+            "projectName": "Donnees_Reparties_94eab90b"
+        },
+        {
+            "type": "java",
+            "name": "Launch Whiteboard",
+            "request": "launch",
+            "mainClass": "linda.whiteboard.Whiteboard",
+            "projectName": "Donnees_Reparties_94eab90b"
+        }
+    ]
+}

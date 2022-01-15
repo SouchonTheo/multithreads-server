@@ -17,7 +17,8 @@ public class BasicTestCallback {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
             }
-            System.out.println("CB done with " + t);
+            System.out.println(cbmotif);
+            linda.eventRegister(eventMode.TAKE, eventTiming.IMMEDIATE, cbmotif, this);
         }
     }
 
@@ -26,19 +27,12 @@ public class BasicTestCallback {
 
         cbmotif = new Tuple(Integer.class, String.class);
         linda.eventRegister(eventMode.TAKE, eventTiming.IMMEDIATE, cbmotif, new MyCallback());
-
-        Tuple t1 = new Tuple(4, 5);
-        System.out.println("(2) write: " + t1);
-        linda.write(t1);
-
-        Tuple t2 = new Tuple("hello", 15);
-        System.out.println("(2) write: " + t2);
-        linda.write(t2);
-        linda.debug("(2)");
-
-        Tuple t3 = new Tuple(4, "foo");
-        System.out.println("(2) write: " + t3);
-        linda.write(t3);
+        Tuple t1;
+        for (int i = 1; i < 3; i++) {
+            t1 = new Tuple(4, "foo");
+            System.out.println("write: " + t1);
+            linda.write(t1);
+        }
 
         linda.debug("(2)");
 

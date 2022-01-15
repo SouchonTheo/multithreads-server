@@ -116,7 +116,8 @@ public class LindaClient implements Linda {
     @Override
     public void eventRegister(eventMode mode, eventTiming timing, Tuple template, Callback callback) {
         try {
-            lindaimpl.eventRegister(mode, timing, template, callback);
+            RemoteCallbackInterface rcb = new RemoteCallback(callback);
+            lindaimpl.eventRegister(mode, timing, template, rcb);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
