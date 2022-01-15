@@ -114,8 +114,10 @@ public class CentralizedLinda implements Linda {
 				for (int i = 0; i < size; i++) {
 					Condition cond = this.readConditions.get(0);
 					this.readConditions.remove(0);
+					System.out.println("write - signal : this.readConditions.remove(0);");
 					cond.signal();
 					try { // On passe la main au read
+						System.out.println("write - await");
 						this.wait.await();
 					} catch (InterruptedException e) {
 						e.printStackTrace();
@@ -132,15 +134,18 @@ public class CentralizedLinda implements Linda {
 				for (int i = 0; i < size; i++) {
 					Condition cond = this.takeConditions.get(0);
 					this.takeConditions.remove(0);
+					System.out.println("cond : " + cond);
+					System.out.println("write - signal : this.takeConditions.remove(0);");
 					cond.signal();
 				}
 			} // Et enfin les callback take
+			System.out.println("ICICICICIICICI");
 			for (Tuple tuple : this.callbacksRegistered.keySet()) {
 				if (t.matches(tuple)) {
 					CheckCallbacksTake(t);
 				}
 			}
-
+			System.out.println("ajkdbjsndlkqsndqsdnsqdknqjksjk");
 		} else {
 			// On peut pas rajouter null à notre espace de tuple
 			System.out.println("throw new IllegalStateException();");
@@ -171,8 +176,10 @@ public class CentralizedLinda implements Linda {
 					Condition takeCondition = monitor.newCondition();
 					int size = this.takeConditions.size();
 					this.takeConditions.add(takeCondition);
-					System.out.println();
+					System.out.println("TakeCond : " + takeCondition);
+					System.out.println("take - await");
 					this.takeConditions.get(size).await();
+					System.out.println("take - after await");
 					this.nbTakeWaiting--;
 				} catch (InterruptedException e) {
 					e.printStackTrace();
@@ -201,10 +208,12 @@ public class CentralizedLinda implements Linda {
 			if (continueLoop) {
 				try {
 					this.nbReadWaiting++;
+					System.out.println("read - signal");
 					this.wait.signal();
 					Condition readCondition = monitor.newCondition();
 					int size = this.readConditions.size();
 					this.readConditions.add(readCondition);
+					System.out.println("read - await");
 					this.readConditions.get(size).await();
 					this.nbReadWaiting--;
 				} catch (InterruptedException e) {
@@ -215,8 +224,10 @@ public class CentralizedLinda implements Linda {
 		if (this.nbTakeWaiting > 0 && this.nbReadWaiting == 0) {
 			Condition cond = this.takeConditions.get(0);
 			this.takeConditions.remove(0);
+			System.out.println("read - signal");
 			cond.signal();
 		}
+		System.out.println("read - signal");
 		this.wait.signal();
 		System.out.println("read - monitor unlock");
 		monitor.unlock();

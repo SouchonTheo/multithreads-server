@@ -25,7 +25,7 @@ public class Searcher implements Runnable {
             while ((tv = linda.tryTake(new Tuple(Code.Value, reqUUID, String.class))) != null) {
                 String val = (String) tv.get(2);
                 int dist = getLevenshteinDistance(req, val);
-                if (dist < 100) { // arbitrary
+                if (dist < 10) { // arbitrary
                     System.out.println(reqUUID);
                     linda.write(new Tuple(Code.Result, reqUUID, val, dist));
                 }
