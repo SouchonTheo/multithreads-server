@@ -77,7 +77,7 @@ public class CentralizedLinda implements Linda {
 		}
 	}
 
-	private void CheckCallbacksTake(Tuple tupleExact, Tuple  tupleTemplate) {
+	private void CheckCallbacksTake(Tuple tupleExact, Tuple tupleTemplate) {
 		Map<Linda.eventMode, Vector<Callback>> mapEventMode = this.callbacksRegistered.get(tupleTemplate);
 		if (mapEventMode.containsKey(eventMode.TAKE)) {
 			Vector<Callback> vectorCallback = mapEventMode.get(eventMode.TAKE);
@@ -86,6 +86,7 @@ public class CentralizedLinda implements Linda {
 				removeCallback(tupleTemplate, eventMode.TAKE, c);
 				this.listTuples.remove(tupleExact);
 				c.call(tupleExact);
+				System.out.println("ici");
 			}
 		}
 	}
@@ -130,12 +131,13 @@ public class CentralizedLinda implements Linda {
 					cond.signal();
 				}
 			} // Et enfin les callback take
+			System.out.println("Avant CheckCallbacksTake(t, tupleTemplate);");
 			for (Tuple tupleTemplate : this.callbacksRegistered.keySet()) {
 				if (t.matches(tupleTemplate)) {
 					CheckCallbacksTake(t, tupleTemplate);
 				}
 			}
-
+			System.out.println("Après CheckCallbacksTake(t, tupleTemplate);");
 		} else {
 			// On peut pas rajouter null à notre espace de tuple
 			throw new IllegalStateException();

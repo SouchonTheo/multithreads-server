@@ -34,6 +34,7 @@ public class Manager implements Runnable {
     }
 
     private void addSearch(String search) {
+
         this.search = search;
         System.out.println("Search " + this.search);
         linda.eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
@@ -113,11 +114,11 @@ public class Manager implements Runnable {
                 bestresult = s;
                 System.out.println("New best (" + bestvalue + "): \"" + bestresult + "\"");
                 linda.eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
-                        new Tuple(Code.Result, reqUUID, String.class, Integer.class), new CbGetSearchers()); // Problem
+                        new Tuple(Code.Result, reqUUID, String.class, Integer.class), new CbGetResult()); // Problem
                 System.out.println("Après ER");
             } else {
                 linda.eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
-                        new Tuple(Code.Result, reqUUID, String.class, Integer.class), this);
+                        new Tuple(Code.Result, reqUUID, String.class, Integer.class), new CbGetResult());
             }
         }
     }
@@ -128,6 +129,7 @@ public class Manager implements Runnable {
             linda.eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
                     new Tuple(Code.IncSearchers, reqUUID), new CbGetSearchers());
         }
+
     }
 
     public void run() {
