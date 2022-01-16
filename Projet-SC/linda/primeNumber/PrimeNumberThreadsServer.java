@@ -1,11 +1,11 @@
-package linda.nbresPremiers;
+package linda.primeNumber;
 
 import java.util.List;
 
 import linda.Linda;
 import linda.Tuple;
 
-public class NbresPremiersThreadsServer {
+public class PrimeNumberThreadsServer {
     private static String url = "//localhost:4000/LindaServer";
     private static Integer nbresThreads;
     private static Integer n;
@@ -54,7 +54,7 @@ public class NbresPremiersThreadsServer {
     }
 
     public static void main(String argv[]) {
-        //ld.takeAll(new Tuple(Integer.class));
+        // ld.takeAll(new Tuple(Integer.class));
         long startTime = System.currentTimeMillis();
         n = Integer.parseInt(argv[0]);
         nbresThreads = n / 10 + n % 2;

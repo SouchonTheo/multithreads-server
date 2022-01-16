@@ -1,11 +1,11 @@
-package linda.nbresPremiers;
+package linda.primeNumber;
 
 import java.util.List;
 
 import linda.Linda;
 import linda.Tuple;
 
-public class NbresPremiersThreadsCentralized {
+public class PrimeNumberThreadsCentralized {
     private static Linda ld;
     private static Integer nbresThreads;
     private static Integer n;

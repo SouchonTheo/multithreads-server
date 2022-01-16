@@ -1,4 +1,4 @@
-package linda.search.RequestVF;
+package linda.search.RequestFV;
 
 import linda.*;
 import java.util.Arrays;

@@ -1,11 +1,11 @@
-package linda.nbresPremiers;
+package linda.primeNumber;
 
 import java.util.List;
 
 import linda.Linda;
 import linda.Tuple;
 
-public class NbresPremiersSeq {
+public class PrimeNumberSeq {
 
     private static Linda ld;
 
