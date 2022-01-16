@@ -60,6 +60,23 @@ public class CallbackPlusTakeReadTest {
                 }
 
                 cbmotif = new Tuple(Integer.class, String.class);
+                linda.eventRegister(eventMode.READ, eventTiming.IMMEDIATE, cbmotif, new MyCallback());
+                linda.debug("(cb take)");
+            }
+
+        }.start();
+
+        new Thread() {
+            // linda = new linda.server.LindaClient("//localhost:4000/MonServeur");
+            public void run() {
+
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                cbmotif = new Tuple(Integer.class, String.class);
                 linda.eventRegister(eventMode.TAKE, eventTiming.IMMEDIATE, cbmotif, new MyCallback());
 
                 // linda.eventRegister(eventMode.READ, eventTiming.IMMEDIATE, cbmotif, new
@@ -77,11 +94,8 @@ public class CallbackPlusTakeReadTest {
                 System.out.println("(2) write: " + t3);
                 linda.write(t3);
 
-                linda.debug("(2)");
-
+                linda.debug("(cb read)");
             }
-
         }.start();
-
     }
 }
