@@ -1,4 +1,4 @@
-package linda.search.RequestVF;
+package linda.search.Request1man1search;
 
 import linda.*;
 import java.util.Arrays;
@@ -26,7 +26,6 @@ public class Searcher implements Runnable {
                 String val = (String) tv.get(2);
                 int dist = getLevenshteinDistance(req, val);
                 if (dist < 10) { // arbitrary
-                    System.out.println(reqUUID);
                     linda.write(new Tuple(Code.Result, reqUUID, val, dist));
                 }
             }

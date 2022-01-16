@@ -23,7 +23,6 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     @Override
     public void write(Tuple t) throws RemoteException {
         linda.write(t);
-
     }
 
     @Override
@@ -59,7 +58,6 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     @Override
     public void eventRegister(eventMode mode, eventTiming timing, Tuple template, RemoteCallbackInterface rCallback)
             throws RemoteException {
-        System.out.println("LSI - ER");
         RemoteCallbackClient cb = new RemoteCallbackClient(rCallback);
         linda.eventRegister(mode, timing, template, cb);
     }

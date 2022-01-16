@@ -1,4 +1,4 @@
-package linda.search.RequestVF;
+package linda.search.Request1man1search;
 
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -17,20 +17,15 @@ public class Manager implements Runnable {
     private String bestresult;
 
     private static Integer nbSearchers;
-    private Integer nbresDone = 0;
+    private String url;
 
     public Manager(Linda lda, String pathname, String search, int nbre, String url) {
         linda = lda;
+        this.url = url;
         this.pathname = pathname;
         this.search = search;
         nbSearchers = nbre;
         reqUUID = UUID.randomUUID();
-
-        for (int i = 0; i < nbSearchers; i++) {
-            Linda ld = new linda.server.LindaClient(url);
-            Searcher searcher = new Searcher(ld, reqUUID);
-            (new Thread(searcher)).start();
-        }
     }
 
     private void addSearch(String search) {
@@ -49,45 +44,12 @@ public class Manager implements Runnable {
         try (Stream<String> stream = Files.lines(Paths.get(pathname))) {
             stream.limit(1000).forEach(s -> linda.write(new Tuple(Code.Value, reqUUID, s.trim())));
         } catch (java.io.IOException e) {
-            e.printStackTrace();
+            System.out.println("prout");
         }
-    }
-
-    private static class EndSearch extends Thread {
-
-        public EndSearch() {
-        }
-
-        public void run() {
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            for (int i = 0; i < nbSearchers; i++) {
-                if (linda.tryRead(new Tuple(Code.Request, reqUUID, String.class)) != null) {
-                    linda.write(new Tuple(Code.Searcher, "done", reqUUID));
-                }
-            }
-        }
+        System.out.println("Fin du chargement du dictionaire");
     }
 
     private void waitForEndSearch() {
-        /*
-         * EndSearch t = new EndSearch();
-         * t.start();
-         * 
-         * while (this.nbresDone < nbSearchers) {
-         * linda.take(new Tuple(Code.Searcher, "done", reqUUID));
-         * this.nbresDone++;
-         * }
-         * System.out.println("après le while WFES");
-         * linda.take(new Tuple(Code.Request, reqUUID, String.class)); // remove query
-         * linda.takeAll(new Tuple(Code.Value, reqUUID, String.class));
-         * linda.takeAll(new Tuple(Code.Searcher, "done", reqUUID));
-         * System.out.println("query done");
-         */
-        System.out.println("START WFES");
         linda.take(new Tuple(Code.Searcher, "done", reqUUID));
         linda.take(new Tuple(Code.Request, reqUUID, String.class)); // remove query
         System.out.println("query done");
@@ -96,8 +58,6 @@ public class Manager implements Runnable {
     private class CbGetResult implements linda.Callback {
 
         public void call(Tuple t) { // [ Result, ?UUID, ?String, ?Integer ]
-            System.out.println("JE SUIS DANS LE CALL BACK");
-            System.out.println(reqUUID);
             String s = (String) t.get(2);
             Integer v = (Integer) t.get(3);
             if (v == 0) {
@@ -115,7 +75,6 @@ public class Manager implements Runnable {
                 System.out.println("New best (" + bestvalue + "): \"" + bestresult + "\"");
                 linda.eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
                         new Tuple(Code.Result, reqUUID, String.class, Integer.class), new CbGetResult()); // Problem
-                System.out.println("Après ER");
             } else {
                 linda.eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
                         new Tuple(Code.Result, reqUUID, String.class, Integer.class), new CbGetResult());
@@ -134,6 +93,11 @@ public class Manager implements Runnable {
 
     public void run() {
         this.loadData(pathname);
+        for (int i = 0; i < nbSearchers; i++) {
+            Linda ld = new linda.server.LindaClient(url);
+            Searcher searcher = new Searcher(ld, reqUUID);
+            (new Thread(searcher)).start();
+        }
         this.addSearch(search);
         this.waitForEndSearch();
     }

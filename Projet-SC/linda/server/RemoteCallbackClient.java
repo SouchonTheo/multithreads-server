@@ -1,5 +1,6 @@
 package linda.server;
 
+import java.io.EOFException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
@@ -8,21 +9,26 @@ import linda.Tuple;
 
 public class RemoteCallbackClient implements Callback {
 
-    private RemoteCallbackInterface rcbi;
+    private static RemoteCallbackInterface rcbi;
+    private static Tuple t;
 
-    public RemoteCallbackClient(RemoteCallbackInterface rcbi) {
-        this.rcbi = rcbi;
+    public RemoteCallbackClient(RemoteCallbackInterface r) {
+        rcbi = r;
     }
 
     @Override
-    public void call(Tuple t) {
-        try {
-            this.rcbi.rCall(t);
-            System.out.println("avant le exit");
-            // UnicastRemoteObject.unexportObject(rcbi, true);
-            // System.exit(0);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
+    public void call(Tuple tuple) {
+        t = tuple;
+        Thread thread = new Thread("New Thread") {
+            public void run() {
+                try {
+                    rcbi.rCall(t);
+                } catch (java.io.IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        };
+        thread.start();
+
     }
 }

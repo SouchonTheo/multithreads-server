@@ -15,9 +15,7 @@ public class RemoteCallback extends UnicastRemoteObject implements RemoteCallbac
 
     @Override
     public void rCall(Tuple t) throws RemoteException {
-        System.out.println("rCall debut");
         this.callback.call(t);
-        System.out.println("rCall fin");
         System.exit(0);
     }
 

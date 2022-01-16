@@ -1,5 +1,6 @@
 package linda.shm;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -93,6 +94,7 @@ public class CentralizedLinda implements Linda {
 
 	@Override
 	public void write(Tuple t) {
+		System.out.println("write - monitor lock");
 		monitor.lock();
 		Boolean notNull = t != null;
 		Integer k = 0;
@@ -131,9 +133,11 @@ public class CentralizedLinda implements Linda {
 					cond.signal();
 				}
 			} // Et enfin les callback take
-			System.out.println("Avant CheckCallbacksTake(t, tupleTemplate);");
-			for (Tuple tupleTemplate : this.callbacksRegistered.keySet()) {
+			Map<Tuple, Map<eventMode, Vector<Callback>>> localCallback = this.callbacksRegistered;
+			// for (Tuple tupleTemplate : this.callbacksRegistered.keySet()) {
+			for (Tuple tupleTemplate : new ArrayList<>(localCallback.keySet())) {
 				if (t.matches(tupleTemplate)) {
+					System.out.println("Avant CheckCallbacksTake(t, tupleTemplate);");
 					CheckCallbacksTake(t, tupleTemplate);
 				}
 			}
@@ -142,6 +146,7 @@ public class CentralizedLinda implements Linda {
 			// On peut pas rajouter null à notre espace de tuple
 			throw new IllegalStateException();
 		}
+		System.out.println("write - monitor unlock");
 		monitor.unlock();
 	}
 
