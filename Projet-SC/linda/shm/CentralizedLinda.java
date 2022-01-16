@@ -87,14 +87,12 @@ public class CentralizedLinda implements Linda {
 				removeCallback(tupleTemplate, eventMode.TAKE, c);
 				this.listTuples.remove(tupleExact);
 				c.call(tupleExact);
-				System.out.println("ici");
 			}
 		}
 	}
 
 	@Override
 	public void write(Tuple t) {
-		System.out.println("write - monitor lock");
 		monitor.lock();
 		Boolean notNull = t != null;
 		Integer k = 0;
@@ -120,7 +118,8 @@ public class CentralizedLinda implements Linda {
 					}
 				}
 			} // Puis tous les callbacks en read
-			for (Tuple tupleTemplate : this.callbacksRegistered.keySet()) {
+			Map<Tuple, Map<eventMode, Vector<Callback>>> localCallback = this.callbacksRegistered;
+			for (Tuple tupleTemplate : new ArrayList<>(localCallback.keySet())) {
 				if (t.matches(tupleTemplate)) {
 					CheckCallbacksRead(t, tupleTemplate);
 				}
@@ -133,20 +132,16 @@ public class CentralizedLinda implements Linda {
 					cond.signal();
 				}
 			} // Et enfin les callback take
-			Map<Tuple, Map<eventMode, Vector<Callback>>> localCallback = this.callbacksRegistered;
-			// for (Tuple tupleTemplate : this.callbacksRegistered.keySet()) {
+			localCallback = this.callbacksRegistered;
 			for (Tuple tupleTemplate : new ArrayList<>(localCallback.keySet())) {
 				if (t.matches(tupleTemplate)) {
-					System.out.println("Avant CheckCallbacksTake(t, tupleTemplate);");
 					CheckCallbacksTake(t, tupleTemplate);
 				}
 			}
-			System.out.println("Après CheckCallbacksTake(t, tupleTemplate);");
 		} else {
 			// On peut pas rajouter null à notre espace de tuple
 			throw new IllegalStateException();
 		}
-		System.out.println("write - monitor unlock");
 		monitor.unlock();
 	}
 
