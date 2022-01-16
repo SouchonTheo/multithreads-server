@@ -1,4 +1,3 @@
-
 package linda.test.Client_Serveur;
 
 import linda.*;
@@ -21,8 +20,6 @@ public class CallbackPlusTakeReadTest {
     }
 
     public static void main(String[] a) {
-        final Linda linda = new linda.server.LindaClient("//localhost:4000/LindaServer");
-
         new Thread() {
             public void run() {
                 try {
@@ -30,6 +27,7 @@ public class CallbackPlusTakeReadTest {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                Linda linda = new linda.server.LindaClient("//localhost:4000/LindaServer");
                 Tuple motif = new Tuple(Integer.class, String.class);
                 Tuple res = linda.take(motif);
                 System.out.println("(Take Results): " + res);
@@ -44,6 +42,7 @@ public class CallbackPlusTakeReadTest {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                Linda linda = new linda.server.LindaClient("//localhost:4000/LindaServer");
                 Tuple motif = new Tuple(Integer.class, String.class);
                 Tuple res = linda.read(motif);
                 System.out.println("(Read Resultat): " + res);
@@ -52,7 +51,24 @@ public class CallbackPlusTakeReadTest {
         }.start();
 
         new Thread() {
-            // linda = new linda.server.LindaClient("//localhost:4000/MonServeur");
+            Linda linda = new linda.server.LindaClient("//localhost:4000/LindaServer");
+            public void run() {
+
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                cbmotif = new Tuple(Integer.class, String.class);
+                linda.eventRegister(eventMode.READ, eventTiming.IMMEDIATE, cbmotif, new MyCallback());
+                linda.debug("(cb take)");
+            }
+
+        }.start();
+
+        new Thread() {
+            Linda linda = new linda.server.LindaClient("//localhost:4000/LindaServer");
             public void run() {
 
                 try {
@@ -63,9 +79,6 @@ public class CallbackPlusTakeReadTest {
 
                 cbmotif = new Tuple(Integer.class, String.class);
                 linda.eventRegister(eventMode.TAKE, eventTiming.IMMEDIATE, cbmotif, new MyCallback());
-
-                // linda.eventRegister(eventMode.READ, eventTiming.IMMEDIATE, cbmotif, new
-                // MyCallback());
 
                 Tuple t1 = new Tuple(4, 5);
                 System.out.println("(2) write: " + t1);
@@ -79,11 +92,12 @@ public class CallbackPlusTakeReadTest {
                 System.out.println("(2) write: " + t3);
                 linda.write(t3);
 
-                linda.debug("(2)");
+                linda.debug("(cb read)");
 
             }
 
         }.start();
 
+        
     }
 }
