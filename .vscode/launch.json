@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Launch testTuple",
+            "request": "launch",
+            "mainClass": "Partie_2.linda.test.Centralized.testTuple",
+            "projectName": "Projet_DR_3bcc0990"
+        },
+        {
+            "type": "java",
             "name": "Launch Current File",
             "request": "launch",
             "mainClass": "${file}",

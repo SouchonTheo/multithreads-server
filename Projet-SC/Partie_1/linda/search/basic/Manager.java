@@ -1,4 +1,4 @@
-package linda.search.basic;
+package Partie_1.linda.search.basic;
 
 import java.util.UUID;
 import java.util.Timer;
@@ -6,7 +6,7 @@ import java.util.TimerTask;
 import java.util.stream.Stream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import linda.*;
+import Partie_1.linda.*;
 
 public class Manager implements Runnable {
 

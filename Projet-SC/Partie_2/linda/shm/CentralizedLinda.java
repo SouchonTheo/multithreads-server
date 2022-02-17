@@ -8,15 +8,17 @@ import java.util.Vector;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import linda.Linda;
 import linda.Tuple;
 import linda.Callback;
+import linda.Linda;
+import linda.InternalCallback;
 
 /** Shared memory implementation of Linda. */
 public class CentralizedLinda implements Linda {
 
 	private Vector<Tuple> listTuples;
-	private Map<Tuple, Map<eventMode, Vector<Callback>>> callbacksRegistered;
+	private Vector<InternalCallback> readers;
+	private Vector<InternalCallback> takers;
 	private ReentrantLock monitor;
 	private Vector<Condition> readConditions;
 	private Vector<Condition> takeConditions;
@@ -26,7 +28,8 @@ public class CentralizedLinda implements Linda {
 
 	public CentralizedLinda() {
 		listTuples = new Vector<Tuple>();
-		callbacksRegistered = new HashMap<Tuple, Map<Linda.eventMode, Vector<Callback>>>();
+		readers = new Vector<InternalCallback>();
+		takers = new Vector<InternalCallback>();
 		monitor = new ReentrantLock();
 		readConditions = new Vector<Condition>();
 		takeConditions = new Vector<Condition>();
@@ -35,30 +38,6 @@ public class CentralizedLinda implements Linda {
 		nbTakeWaiting = 0;
 	}
 
-	private void addCallback(Tuple tupleTemplate, Linda.eventMode mode, Callback callback) {
-		Map<Linda.eventMode, Vector<Callback>> mapEventMode = this.callbacksRegistered.get(tupleTemplate);
-		Vector<Callback> vectorCallback = new Vector<Callback>();
-		if (mapEventMode == null) {
-			mapEventMode = new HashMap<Linda.eventMode, Vector<Callback>>();
-			vectorCallback.add(callback);
-			mapEventMode.put(mode, vectorCallback);
-		} else {
-			if (mapEventMode.containsKey(mode)) {
-				vectorCallback = mapEventMode.get(mode);
-			}
-			vectorCallback.add(callback);
-		}
-		mapEventMode.put(mode, vectorCallback);
-		this.callbacksRegistered.put(tupleTemplate, mapEventMode);
-	}
-
-	private void removeCallback(Tuple tupleExact, Linda.eventMode mode, Callback callback) {
-		Map<Linda.eventMode, Vector<Callback>> mapEventMode = this.callbacksRegistered.get(tupleExact);
-		Vector<Callback> vectorCallback = mapEventMode.get(mode);
-		vectorCallback.remove(callback);
-		mapEventMode.put(mode, vectorCallback);
-		this.callbacksRegistered.put(tupleExact, mapEventMode);
-	}
 
 	private void CheckCallbacksRead(Tuple tupleExact) {
 		for (Tuple tupleTemplate : this.callbacksRegistered.keySet()) {
@@ -152,7 +131,6 @@ public class CentralizedLinda implements Linda {
 
 	@Override
 	public Tuple take(Tuple template) {
-		System.out.println("take monitor lock");
 		monitor.lock();
 		Tuple ret = null;
 		boolean continueLoop = true;
@@ -301,25 +279,31 @@ public class CentralizedLinda implements Linda {
 
 	@Override
 	public void eventRegister(eventMode mode, eventTiming timing, Tuple template, Callback callback) {
-		System.out.println("eventRegister - monitor lock");
 		monitor.lock();
-		System.out.println("LOCAL - ER");
 		if (timing.equals(Linda.eventTiming.IMMEDIATE)) {
 			Tuple t = null;
 			if (mode.equals(Linda.eventMode.READ)) {
 				t = tryRead(template);
+				if (t != null) {
+					callback.call(t);
+				} else {
+					this.readers.add(new InternalCallback(template, callback));
+				}
 			} else {
 				t = tryTake(template);
-			}
-			if (t != null) {
-				callback.call(t);
-			} else {
-				addCallback(template, mode, callback);
+				if (t != null) {
+					callback.call(t);
+				} else {
+					this.takers.add(new InternalCallback(template, callback));
+				}
 			}
 		} else {
-			addCallback(template, mode, callback);
+			if (mode.equals(Linda.eventMode.READ)) {
+				this.readers.add(new InternalCallback(template, callback));
+			} else {
+				this.takers.add(new InternalCallback(template, callback));
+			}
 		}
-		System.out.println("eventRegister - monitor unlock");
 		monitor.unlock();
 	}
 
