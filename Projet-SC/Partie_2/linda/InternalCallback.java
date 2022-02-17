@@ -1,10 +1,10 @@
 package linda;
+
 public class InternalCallback {
     
     private Tuple template;
 
     private Callback callback;
-
 
     public InternalCallback(Tuple tuple, Callback cb) {
         this.callback = cb;

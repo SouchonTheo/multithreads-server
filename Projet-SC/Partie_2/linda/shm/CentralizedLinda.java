@@ -73,10 +73,7 @@ public class CentralizedLinda implements Linda {
 		}
 	}
 
-	@Override
-	public void write(Tuple t) {
-		System.out.println("write monitor lock");
-		monitor.lock();
+	private Boolean notNull(Tuple t) {
 		Boolean notNull = t != null;
 		Integer k = 0;
 		while (k < t.size() && notNull) {
@@ -85,47 +82,66 @@ public class CentralizedLinda implements Linda {
 			}
 			k++;
 		}
-		if (notNull) {
-			this.listTuples.add(t);
-			// On vérifie les read en premiers
-			if (this.nbReadWaiting > 0) {
-				int size = this.readConditions.size();
-				for (int i = 0; i < size; i++) {
-					Condition cond = this.readConditions.get(0);
-					this.readConditions.remove(0);
-					cond.signal();
-					try { // On passe la main au read
-						this.wait.await();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-			} // Puis tous les callbacks en read
-			for (Tuple tuple : this.callbacksRegistered.keySet()) {
-				if (t.matches(tuple)) {
-					CheckCallbacksRead(t);
-				}
-			} // Ensuite tous les take
-			if ((this.nbReadWaiting == 0) && (this.nbTakeWaiting > 0)) {
-				int size = this.takeConditions.size();
-				for (int i = 0; i < size; i++) {
-					Condition cond = this.takeConditions.get(0);
-					this.takeConditions.remove(0);
-					cond.signal();
-				}
-			} // Et enfin les callback take
-			for (Tuple tuple : this.callbacksRegistered.keySet()) {
-				if (t.matches(tuple)) {
-					CheckCallbacksTake(t);
+		return notNull;
+	}
+
+	public Vector<InternalCallback> getReaders(Tuple t) {
+		Vector<InternalCallback> listICallbacks = new Vector<InternalCallback>();
+		if (this.readers.size() > 0) {
+			Iterator<InternalCallback> iterator = this.readers.iterator();
+			while (iterator.hasNext()) {
+				InternalCallback iCallback = iterator.next();
+				if (iCallback.getTemplate().matches(t)) {
+					listICallbacks.add(iCallback);
 				}
 			}
+		}
+		return listICallbacks;
+	}
 
+	public InternalCallback getFirstTaker(Tuple t) {
+		InternalCallback takeCb = null;
+		if (this.readers.size() > 0) {
+			Iterator<InternalCallback> iterator = this.takers.iterator();
+			while (iterator.hasNext()) {
+				InternalCallback iCallback = iterator.next();
+				if (iCallback.getTemplate().matches(t)) {
+					takeCb = iCallback;
+					break;
+				}
+			}
+		}
+		return takeCb;
+	}
+
+	@Override
+	public void write(Tuple t) {
+		monitor.lock();
+		if (notNull(t)) {
+			Vector<InternalCallback> listICallbacks = getReaders(t);
+			InternalCallback takeCallback = getFirstTaker(t);
+			if (takeCallback == null){
+				this.listTuples.add(t);
+			}
+			//monitor.unlock();
+			// On vérifie les read en premiers
+			if (listICallbacks.size() > 0) {
+				Iterator<InternalCallback> iterator = listICallbacks.iterator();
+				while (iterator.hasNext()) {
+					InternalCallback iCallback = iterator.next();
+					if (iCallback.getTemplate().matches(t)) {
+						iCallback.getCallback().call(t);
+					}
+				}
+			}
+			// Puis on appelle le take
+			if (takeCallback != null) {
+				takeCallback.getCallback().call(t);
+			}
 		} else {
 			// On peut pas rajouter null à notre espace de tuple
-			System.out.println("throw new IllegalStateException();");
 			throw new IllegalStateException();
 		}
-		System.out.println("write monitor unlock");
 		monitor.unlock();
 	}
 
