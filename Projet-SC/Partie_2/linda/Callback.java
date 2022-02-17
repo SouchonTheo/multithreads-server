@@ -1,7 +1,5 @@
 package linda;
 
-import java.io.Serializable;
-
 /** Callback when a tuple appears.
  * @author philippe.queinnec@enseeiht.fr
 */

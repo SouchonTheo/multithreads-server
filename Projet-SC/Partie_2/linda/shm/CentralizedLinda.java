@@ -1,9 +1,7 @@
 package linda.shm;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -38,41 +36,6 @@ public class CentralizedLinda implements Linda {
 		nbTakeWaiting = 0;
 	}
 
-
-	private void CheckCallbacksRead(Tuple tupleExact) {
-		for (Tuple tupleTemplate : this.callbacksRegistered.keySet()) {
-			if (tupleTemplate.contains(tupleExact)) {
-				Map<Linda.eventMode, Vector<Callback>> mapEventMode = this.callbacksRegistered.get(tupleTemplate);
-				if (mapEventMode.containsKey(eventMode.READ)) {
-					Vector<Callback> vectorCallback = mapEventMode.get(eventMode.READ);
-					int taille = vectorCallback.size();
-					for (int i = 0; i < taille; i++) {
-						Callback c = vectorCallback.get(i);
-						removeCallback(tupleTemplate, eventMode.READ, c);
-						c.call(tupleExact);
-					}
-				}
-			}
-		}
-	}
-
-	private void CheckCallbacksTake(Tuple tupleExact) {
-		for (Tuple tupleTemplate : this.callbacksRegistered.keySet()) {
-			if (tupleTemplate.contains(tupleExact)) {
-				Map<Linda.eventMode, Vector<Callback>> mapEventMode = this.callbacksRegistered.get(tupleTemplate);
-				if (mapEventMode.containsKey(eventMode.TAKE)) {
-					Vector<Callback> vectorCallback = mapEventMode.get(eventMode.TAKE);
-					if (listTuples.contains(tupleExact)) {
-						Callback c = vectorCallback.get(0);
-						removeCallback(tupleTemplate, eventMode.TAKE, c);
-						this.listTuples.remove(tupleExact);
-						c.call(tupleExact);
-					}
-				}
-			}
-		}
-	}
-
 	private Boolean notNull(Tuple t) {
 		Boolean notNull = t != null;
 		Integer k = 0;
@@ -93,6 +56,7 @@ public class CentralizedLinda implements Linda {
 				InternalCallback iCallback = iterator.next();
 				if (iCallback.getTemplate().matches(t)) {
 					listICallbacks.add(iCallback);
+					this.takers.remove(iCallback);
 				}
 			}
 		}
@@ -101,12 +65,13 @@ public class CentralizedLinda implements Linda {
 
 	public InternalCallback getFirstTaker(Tuple t) {
 		InternalCallback takeCb = null;
-		if (this.readers.size() > 0) {
+		if (this.takers.size() > 0) {
 			Iterator<InternalCallback> iterator = this.takers.iterator();
 			while (iterator.hasNext()) {
 				InternalCallback iCallback = iterator.next();
 				if (iCallback.getTemplate().matches(t)) {
 					takeCb = iCallback;
+					this.takers.remove(iCallback);
 					break;
 				}
 			}
@@ -148,78 +113,60 @@ public class CentralizedLinda implements Linda {
 	@Override
 	public Tuple take(Tuple template) {
 		monitor.lock();
+		// on cherche le tuple dans l'eespace
 		Tuple ret = null;
-		boolean continueLoop = true;
-		while (continueLoop) {
-			Iterator<Tuple> iterator = this.listTuples.iterator();
-			while (continueLoop && iterator.hasNext()) {
-				ret = iterator.next();
-				if (ret.matches(template)) {
-					this.listTuples.remove(ret);
-					continueLoop = false;
-				}
-			}
-			if (continueLoop) {
-				try {
-					this.nbTakeWaiting++;
-					Condition takeCondition = monitor.newCondition();
-					int size = this.takeConditions.size();
-					this.takeConditions.add(takeCondition);
-					System.out.println();
-					this.takeConditions.get(size).await();
-					this.nbTakeWaiting--;
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+		Iterator<Tuple> iterator = this.listTuples.iterator();
+		while (iterator.hasNext()) {
+			ret = iterator.next();
+			if (ret.matches(template)) {
+				this.listTuples.remove(ret);
+				return ret;
 			}
 		}
-		System.out.println("take monitor unlock");
+
+		// Si on ne le trouve pas on enregistre le callback
+		Condition condition = monitor.newCondition();
+		TriggerCallback tCb = new TriggerCallback(condition);
+
+		this.takers.add(new InternalCallback(template, tCb));
 		monitor.unlock();
-		return ret;
+		try {
+			condition.wait();
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+		return tCb.getTuple();
 	}
 
 	@Override
 	public Tuple read(Tuple template) {
-		System.out.println("read monitor lock");
 		monitor.lock();
+		// on cherche le tuple dans l'eespace
 		Tuple ret = null;
-		boolean continueLoop = true;
-		while (continueLoop) {
-			Iterator<Tuple> iterator = this.listTuples.iterator();
-			while (continueLoop && iterator.hasNext()) {
-				ret = iterator.next();
-				if (ret.matches(template)) {
-					continueLoop = false;
-				}
-			}
-			if (continueLoop) {
-				try {
-					this.nbReadWaiting++;
-					this.wait.signal();
-					Condition readCondition = monitor.newCondition();
-					int size = this.readConditions.size();
-					this.readConditions.add(readCondition);
-					this.readConditions.get(size).await();
-					this.nbReadWaiting--;
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+		Iterator<Tuple> iterator = this.listTuples.iterator();
+		while (iterator.hasNext()) {
+			ret = iterator.next();
+			if (ret.matches(template)) {
+				return ret;
 			}
 		}
-		if (this.nbTakeWaiting > 0 && this.nbReadWaiting == 0) {
-			Condition cond = this.takeConditions.get(0);
-			this.takeConditions.remove(0);
-			cond.signal();
-		}
-		this.wait.signal();
-		System.out.println("read monitor unlock");
+
+		// Si on ne le trouve pas on enregistre le callback
+		Condition condition = monitor.newCondition();
+		TriggerCallback tCb = new TriggerCallback(condition);
+
+		this.readers.add(new InternalCallback(template, tCb));
 		monitor.unlock();
-		return ret;
+		try {
+			condition.wait();
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+		return tCb.getTuple();
 	}
 
 	@Override
 	public Tuple tryTake(Tuple template) {
-		System.out.println("tryTake monitor lock");
 		monitor.lock();
 		Tuple ret = null;
 		Iterator<Tuple> iterator = this.listTuples.iterator();
@@ -227,60 +174,46 @@ public class CentralizedLinda implements Linda {
 			ret = iterator.next();
 			if (ret.matches(template)) {
 				this.listTuples.remove(ret);
-				System.out.println("tryTake monitor unlock");
 				monitor.unlock();
 				return ret;
 			}
 		}
-		System.out.println("tryTake monitor unlock");
 		monitor.unlock();
 		return null;
 	}
 
 	@Override
 	public Tuple tryRead(Tuple template) {
-		System.out.println("tryRead monitor lock");
 		monitor.lock();
 		Tuple ret = null;
 		Iterator<Tuple> iterator = this.listTuples.iterator();
 		while (iterator.hasNext()) {
 			ret = iterator.next();
 			if (ret.matches(template)) {
-				System.out.println("tryread monitor unlock");
 				monitor.unlock();
 				return ret;
 			}
 		}
-		System.out.println("tryRead monitor unlock");
 		monitor.unlock();
 		return null;
 	}
 
 	@Override
 	public Collection<Tuple> takeAll(Tuple template) {
-		System.out.println("takeAll monitor lock");
 		monitor.lock();
 		Collection<Tuple> collectionTuples = new Vector<Tuple>();
-		Tuple t = null;
-		int size = this.listTuples.size();
-		int j = 0;
-		for (int i = 0; i < size; i++) {
-			t = this.listTuples.get(j);
+		for (Tuple t : this.listTuples) {
 			if (t.matches(template)) {
 				collectionTuples.add(t);
 				this.listTuples.remove(t);
-			} else {
-				j++;
 			}
 		}
-		System.out.println("takeAll monitor unlock");
 		monitor.unlock();
 		return collectionTuples;
 	}
 
 	@Override
 	public Collection<Tuple> readAll(Tuple template) {
-		System.out.println("readAll monitor lock");
 		monitor.lock();
 		Collection<Tuple> collectionTuples = new Vector<Tuple>();
 		for (Tuple t : this.listTuples) {
@@ -288,7 +221,6 @@ public class CentralizedLinda implements Linda {
 				collectionTuples.add(t);
 			}
 		}
-		System.out.println("readAll monitor unlock");
 		monitor.unlock();
 		return collectionTuples;
 	}
