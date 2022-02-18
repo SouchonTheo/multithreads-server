@@ -48,7 +48,7 @@ public class CentralizedLinda implements Linda {
 			Iterator<InternalCallback> iterator = this.readers.iterator();
 			while (iterator.hasNext()) {
 				InternalCallback iCallback = iterator.next();
-				if (iCallback.getTemplate().matches(t)) {
+				if (iCallback.getTemplate().contains(t)) {
 					listICallbacks.add(iCallback);
 					this.takers.remove(iCallback);
 				}
@@ -63,7 +63,7 @@ public class CentralizedLinda implements Linda {
 			Iterator<InternalCallback> iterator = this.takers.iterator();
 			while (iterator.hasNext()) {
 				InternalCallback iCallback = iterator.next();
-				if (iCallback.getTemplate().matches(t)) {
+				if (iCallback.getTemplate().contains(t)) {
 					takeCb = iCallback;
 					this.takers.remove(iCallback);
 					break;
@@ -79,18 +79,16 @@ public class CentralizedLinda implements Linda {
 		if (notNull(t)) {
 			Vector<InternalCallback> listICallbacks = getReaders(t);
 			InternalCallback takeCallback = getFirstTaker(t);
-			if (takeCallback == null){
+			if (takeCallback == null) {
 				this.listTuples.add(t);
 			}
-			//monitor.unlock();
+			monitor.unlock();
 			// On vérifie les read en premiers
 			if (listICallbacks.size() > 0) {
 				Iterator<InternalCallback> iterator = listICallbacks.iterator();
 				while (iterator.hasNext()) {
 					InternalCallback iCallback = iterator.next();
-					if (iCallback.getTemplate().matches(t)) {
-						iCallback.getCallback().call(t);
-					}
+					iCallback.getCallback().call(t);
 				}
 			}
 			// Puis on appelle le take
@@ -99,9 +97,9 @@ public class CentralizedLinda implements Linda {
 			}
 		} else {
 			// On peut pas rajouter null à notre espace de tuple
+			monitor.unlock();
 			throw new IllegalStateException();
 		}
-		monitor.unlock();
 	}
 
 	@Override
@@ -114,21 +112,20 @@ public class CentralizedLinda implements Linda {
 			ret = iterator.next();
 			if (ret.matches(template)) {
 				this.listTuples.remove(ret);
+				monitor.unlock();
 				return ret;
 			}
 		}
-
 		// Si on ne le trouve pas on enregistre le callback
 		Condition condition = monitor.newCondition();
-		TriggerCallback tCb = new TriggerCallback(condition);
-
+		TriggerCallback tCb = new TriggerCallback(condition, monitor);
 		this.takers.add(new InternalCallback(template, tCb));
-		monitor.unlock();
 		try {
-			condition.wait();
+			condition.await();
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
+		monitor.unlock();
 		return tCb.getTuple();
 	}
 
@@ -141,21 +138,22 @@ public class CentralizedLinda implements Linda {
 		while (iterator.hasNext()) {
 			ret = iterator.next();
 			if (ret.matches(template)) {
+				monitor.unlock();
 				return ret;
 			}
 		}
 
 		// Si on ne le trouve pas on enregistre le callback
 		Condition condition = monitor.newCondition();
-		TriggerCallback tCb = new TriggerCallback(condition);
+		TriggerCallback tCb = new TriggerCallback(condition, monitor);
 
 		this.readers.add(new InternalCallback(template, tCb));
-		monitor.unlock();
 		try {
-			condition.wait();
+			condition.await();
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
+		monitor.unlock();
 		return tCb.getTuple();
 	}
 
