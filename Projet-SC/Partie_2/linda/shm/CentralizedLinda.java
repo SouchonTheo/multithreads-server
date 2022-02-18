@@ -18,34 +18,28 @@ public class CentralizedLinda implements Linda {
 	private Vector<InternalCallback> readers;
 	private Vector<InternalCallback> takers;
 	private ReentrantLock monitor;
-	private Vector<Condition> readConditions;
-	private Vector<Condition> takeConditions;
-	private Condition wait;
-	private int nbReadWaiting;
-	private int nbTakeWaiting;
 
 	public CentralizedLinda() {
 		listTuples = new Vector<Tuple>();
 		readers = new Vector<InternalCallback>();
 		takers = new Vector<InternalCallback>();
 		monitor = new ReentrantLock();
-		readConditions = new Vector<Condition>();
-		takeConditions = new Vector<Condition>();
-		wait = monitor.newCondition();
-		nbReadWaiting = 0;
-		nbTakeWaiting = 0;
 	}
 
 	private Boolean notNull(Tuple t) {
-		Boolean notNull = t != null;
-		Integer k = 0;
-		while (k < t.size() && notNull) {
-			if (t.get(k) == null) {
-				notNull = false;
+		if (t == null) {
+			return false;
+		} else {
+			Boolean notNull = true;
+			Integer k = 0;
+			while (k < t.size() && notNull) {
+				if (t.get(k) == null) {
+					notNull = false;
+				}
+				k++;
 			}
-			k++;
+			return notNull;
 		}
-		return notNull;
 	}
 
 	public Vector<InternalCallback> getReaders(Tuple t) {
