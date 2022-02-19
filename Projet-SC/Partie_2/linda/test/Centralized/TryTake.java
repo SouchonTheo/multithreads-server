@@ -11,7 +11,7 @@ public class TryTake {
 
             public void run() {
                 try {
-                    Thread.sleep(2);
+                    Thread.sleep(2000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -25,7 +25,7 @@ public class TryTake {
         new Thread() {
             public void run() {
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(100);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

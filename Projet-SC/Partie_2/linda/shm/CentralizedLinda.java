@@ -75,15 +75,19 @@ public class CentralizedLinda implements Linda {
 
 	@Override
 	public void write(Tuple t) {
-		monitor.lock();
 		if (notNull(t)) {
+			monitor.lock();
 			Vector<InternalCallback> listICallbacks = getReaders(t);
 			InternalCallback takeCallback = getFirstTaker(t);
 			if (takeCallback == null) {
 				this.listTuples.add(t);
+				monitor.unlock();
+			} else {
+				monitor.unlock();
+				// On appelle le take
+				takeCallback.getCallback().call(t);
 			}
-			monitor.unlock();
-			// On vérifie les read en premiers
+			// Et on vérifie les read
 			if (listICallbacks.size() > 0) {
 				Iterator<InternalCallback> iterator = listICallbacks.iterator();
 				while (iterator.hasNext()) {
@@ -91,13 +95,8 @@ public class CentralizedLinda implements Linda {
 					iCallback.getCallback().call(t);
 				}
 			}
-			// Puis on appelle le take
-			if (takeCallback != null) {
-				takeCallback.getCallback().call(t);
-			}
 		} else {
 			// On peut pas rajouter null à notre espace de tuple
-			monitor.unlock();
 			throw new IllegalStateException();
 		}
 	}
@@ -132,7 +131,7 @@ public class CentralizedLinda implements Linda {
 	@Override
 	public Tuple read(Tuple template) {
 		monitor.lock();
-		// on cherche le tuple dans l'eespace
+		// on cherche le tuple dans l'espace
 		Tuple ret = null;
 		Iterator<Tuple> iterator = this.listTuples.iterator();
 		while (iterator.hasNext()) {
@@ -194,10 +193,13 @@ public class CentralizedLinda implements Linda {
 	public Collection<Tuple> takeAll(Tuple template) {
 		monitor.lock();
 		Collection<Tuple> collectionTuples = new Vector<Tuple>();
-		for (Tuple t : this.listTuples) {
-			if (t.matches(template)) {
-				collectionTuples.add(t);
-				this.listTuples.remove(t);
+		Iterator<Tuple> iterator = this.listTuples.iterator();
+		Tuple ret = null;
+		while (iterator.hasNext()) {
+			ret = iterator.next();
+			if (ret.matches(template)) {
+				collectionTuples.add(ret);
+				this.listTuples.remove(ret);
 			}
 		}
 		monitor.unlock();
@@ -208,9 +210,12 @@ public class CentralizedLinda implements Linda {
 	public Collection<Tuple> readAll(Tuple template) {
 		monitor.lock();
 		Collection<Tuple> collectionTuples = new Vector<Tuple>();
-		for (Tuple t : this.listTuples) {
-			if (t.matches(template)) {
-				collectionTuples.add(t);
+		Iterator<Tuple> iterator = this.listTuples.iterator();
+		Tuple ret = null;
+		while (iterator.hasNext()) {
+			ret = iterator.next();
+			if (ret.matches(template)) {
+				collectionTuples.add(ret);
 			}
 		}
 		monitor.unlock();
@@ -219,7 +224,6 @@ public class CentralizedLinda implements Linda {
 
 	@Override
 	public void eventRegister(eventMode mode, eventTiming timing, Tuple template, Callback callback) {
-		monitor.lock();
 		if (timing.equals(Linda.eventTiming.IMMEDIATE)) {
 			Tuple t = null;
 			if (mode.equals(Linda.eventMode.READ)) {
@@ -227,24 +231,29 @@ public class CentralizedLinda implements Linda {
 				if (t != null) {
 					callback.call(t);
 				} else {
+					monitor.lock();
 					this.readers.add(new InternalCallback(template, callback));
+					monitor.unlock();
 				}
 			} else {
 				t = tryTake(template);
 				if (t != null) {
 					callback.call(t);
 				} else {
+					monitor.lock();
 					this.takers.add(new InternalCallback(template, callback));
-				}
+					monitor.unlock();
+				}	
 			}
 		} else {
+			monitor.lock();
 			if (mode.equals(Linda.eventMode.READ)) {
 				this.readers.add(new InternalCallback(template, callback));
 			} else {
 				this.takers.add(new InternalCallback(template, callback));
 			}
+			monitor.unlock();
 		}
-		monitor.unlock();
 	}
 
 	@Override
