@@ -60,7 +60,7 @@ public class CallbackPlusTakeReadTest {
                 }
 
                 cbmotif = new Tuple(Integer.class, String.class);
-                linda.eventRegister(eventMode.TAKE, eventTiming.IMMEDIATE, cbmotif, new MyCallback());
+                //linda.eventRegister(eventMode.TAKE, eventTiming.IMMEDIATE, cbmotif, new MyCallback());
 
                 // linda.eventRegister(eventMode.READ, eventTiming.IMMEDIATE, cbmotif, new
                 // MyCallback());
