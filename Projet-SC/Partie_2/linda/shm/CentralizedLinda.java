@@ -154,7 +154,7 @@ public class CentralizedLinda implements Linda {
 			}
 			monitor.unlock();
 
-			// On vérifie les read
+			// On appelle les read
 			if (listICallbacks.size() > 0) {
 				Iterator<InternalCallback> iterator = listICallbacks.iterator();
 				while (iterator.hasNext()) {
