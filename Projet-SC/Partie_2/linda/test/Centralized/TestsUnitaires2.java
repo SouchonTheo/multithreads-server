@@ -1,10 +1,11 @@
+
 package linda.test.Centralized;
 
 import linda.*;
 
-public class TestsUnitaires1 {
+public class TestsUnitaires2 {
 
-    /*Test de priorité des accès pour le lecteur rédacteur. Il a servi à trouver une erreur de locks.*/
+    /*Test de priorité des accès pour le lecteur rédacteur. Il a servi à trouver une erreur de blockage.*/
     public static void main(String[] a) {
                 
         final Linda linda = new linda.shm.CentralizedLinda();
@@ -34,7 +35,7 @@ public class TestsUnitaires1 {
             @Override
             public void run() {
                 for(int i = 0; i< 100; i++) {
-                    linda.tryRead(t2);
+                    linda.write(t2);
                     }
             }
         };
@@ -42,7 +43,7 @@ public class TestsUnitaires1 {
             @Override
             public void run() {
                 for(int i = 0; i< 100; i++) {
-                linda.tryRead(t3);
+                linda.tryTake(t3);
                 }
             }
         };
@@ -56,9 +57,9 @@ public class TestsUnitaires1 {
             e.printStackTrace();
         }
         
-        Tuple res4 = linda.tryTake(t4);
+        Tuple res4 = linda.read(t4);
         linda.write(t4);
-        Tuple res5 = linda.tryTake(t4);
+        Tuple res5 = linda.read(t4);
         
 
         System.out.print("Ceci devrait être vrai : ");
