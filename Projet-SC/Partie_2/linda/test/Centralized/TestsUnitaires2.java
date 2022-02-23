@@ -58,6 +58,7 @@ public class TestsUnitaires2 {
         }
         
         Tuple res4 = linda.read(t4);
+        System.out.println("On write");
         linda.write(t4);
         Tuple res5 = linda.read(t4);
         

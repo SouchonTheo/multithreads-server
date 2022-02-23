@@ -2,7 +2,9 @@ package linda.shm;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -22,6 +24,7 @@ public class CentralizedLinda implements Linda {
 	private Boolean timeout;
 	private Boolean writing;
 	private Boolean taking;
+	private int nbThreads;
 	private int nbCurrentReaders;
 	private int nbReadWaiting;
 	private int nbTakeWaiting;
@@ -39,6 +42,7 @@ public class CentralizedLinda implements Linda {
 		timeout = false;
 		writing = false;
 		taking = false;
+		nbThreads = 4;
 		nbCurrentReaders = 0;
 		nbReadWaiting = 0;
 		nbTakeWaiting = 0;
@@ -114,6 +118,66 @@ public class CentralizedLinda implements Linda {
 		}
 	}
 
+	private Tuple search(Tuple template) {
+		Tuple ret = null;
+        Iterator<Tuple> iterator = listTuples.iterator();
+        while (iterator.hasNext()) {
+            ret = iterator.next();
+            if (ret.matches(template)) {
+                break;
+            }
+			ret = null;
+        }
+		return ret;
+	}
+	// Debuggague en cours sur cette version.
+	private Tuple searchPar(Tuple template) {
+		Semaphore sem = new Semaphore(0);
+		Vector<SearchList> threads = new Vector<SearchList>();
+		SearchList t = null;
+		int min, max;
+		int size = this.listTuples.size();
+		for (int i = 0; i < nbThreads; i++) {
+			min = (size/nbThreads) * i;
+			max = (size/nbThreads) * (i+1);
+			
+			List<Tuple> clonedList = (List<Tuple>) this.listTuples.clone();
+			List<Tuple> sublist = clonedList.subList(min, max);
+			t = new SearchList(sublist, template, sem);
+			threads.add(t);
+			t.start();
+		}
+		Tuple ret = null;
+		SearchList thread;
+		while(threads.size() > 0){
+			try {
+				sem.acquire();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			Iterator<SearchList> iterator = threads.iterator();
+			while(iterator.hasNext()) {
+				thread = iterator.next();
+				ret = thread.getResult();
+				if (ret != null) { // On a trouvé le tuple
+					threads.remove(thread);
+					break;
+				} else if (!thread.isAlive()) { // au cas ou il soit fini
+					threads.remove(thread);
+				}
+			}
+			if (ret != null) {
+				// On l'a trouvé donc on arrête tout
+				for(SearchList thr : threads) {
+					thr.interrupt();
+				}
+				threads.removeAllElements();
+			}
+		}
+		return ret;
+	}
+
+
 	@Override
 	public void write(Tuple t) {
 		if (notNull(t)) {
@@ -125,7 +189,6 @@ public class CentralizedLinda implements Linda {
 				try {
 					nbWriteWaiting++;
 					launchTimer();
-					System.out.println("le write attend");
 					canWrite.await();
 					timerLaunched = false;
 					writing = true;
@@ -180,7 +243,6 @@ public class CentralizedLinda implements Linda {
 			try {
 				nbTakeWaiting++;
 				launchTimer();
-				System.out.println("le take attend");
 				canTake.await();
 				timerLaunched = false;
 				taking = true;
@@ -190,22 +252,17 @@ public class CentralizedLinda implements Linda {
 			}
 		}
 		// on cherche le tuple dans l'espace
-		Tuple ret = null;
-		Iterator<Tuple> iterator = this.listTuples.iterator();
-		while (iterator.hasNext()) {
-			ret = iterator.next();
-			if (ret.matches(template)) {
-				this.listTuples.remove(ret);
-				break;
-			}
-		}
+		Tuple ret = search(template);
+		this.listTuples.remove(ret);
 		// On passe la main au read s'il y en a, sinon au write, sinon au autres take
 		taking = false;
 		if (nbReadWaiting > 0) {
 			canRead.signalAll();
 		} else if (nbWriteWaiting > 0) {
+			writing = true;
 			canWrite.signal();
 		} else if (nbTakeWaiting > 0) {
+			taking = true;
 			canTake.signal();
 		}
 		// Si on ne le trouve pas on enregistre le callback et attend sa réponse
@@ -232,7 +289,6 @@ public class CentralizedLinda implements Linda {
 		if (writing || taking || timeout) {
 			try {
 				nbReadWaiting++;
-				System.out.println("le read attend");
 				canRead.await();
 				nbReadWaiting--;
 			} catch (InterruptedException e) {
@@ -241,38 +297,37 @@ public class CentralizedLinda implements Linda {
 		}
 		// On peut lire
 		nbCurrentReaders++;
-		monitor.unlock();
+		//monitor.unlock();
+
 		// on cherche le tuple dans l'espace
-		Tuple ret = null;
-		Iterator<Tuple> iterator = this.listTuples.iterator();
-		while (iterator.hasNext()) {
-			ret = iterator.next();
-			if (ret.matches(template)) {
-				break;
-			}
-		}
-		monitor.lock();
-		// On vérifie si on doit réveiller quelqu'un
-		nbCurrentReaders--;
-		if (nbCurrentReaders == 0) {
-			if (nbWriteWaiting > 0) {
-				canWrite.signal();
-			} else if (nbTakeWaiting > 0) {
-				canTake.signal();
-			}
-		}
+		Tuple ret = search(template);
+
+		//monitor.lock();
 		if (ret == null) {
 			// Si on ne le trouve pas on enregistre le callback puis on attend sa réponse
 			Condition condition = monitor.newCondition();
 			TriggerCallback tCb = new TriggerCallback(condition, monitor);
-
+			
 			this.readers.add(new InternalCallback(template, tCb));
 			try {
+				nbCurrentReaders--;	
 				condition.await();
+				nbCurrentReaders++;
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
 			ret = tCb.getTuple();
+		}
+		// On vérifie si on doit réveiller quelqu'un
+		nbCurrentReaders--;
+		if (nbCurrentReaders == 0) {
+			if (nbWriteWaiting > 0) {
+				writing = true;
+				canWrite.signal();
+			} else if (nbTakeWaiting > 0) {
+				taking = true;
+				canTake.signal();
+			}
 		}
 		monitor.unlock();
 		return ret;
@@ -281,12 +336,15 @@ public class CentralizedLinda implements Linda {
 	@Override
 	public Tuple tryTake(Tuple template) {
 		monitor.lock();
+        System.out.println("On entre dans tryTake : " + nbCurrentReaders);
 		// On vérifie que l'on peut prendre, c'est à dire qu'il n'y a pas de lecteurs
 		if (nbCurrentReaders > 0) {
 			try {
 				nbTakeWaiting++;
 				launchTimer();
+				System.out.println("le trytake attends");
 				canTake.await();
+				System.out.println("le trytake se reveille");
 				timerLaunched = false;
 				taking = true;
 				nbTakeWaiting--;
@@ -294,23 +352,21 @@ public class CentralizedLinda implements Linda {
 				e.printStackTrace();
 			}
 		}
+        System.out.println("On search : " + template);
 
-		Tuple ret = null;
-		Iterator<Tuple> iterator = this.listTuples.iterator();
-		while (iterator.hasNext()) {
-			ret = iterator.next();
-			if (ret.matches(template)) {
-				this.listTuples.remove(ret);
-				break;
-			}
-		}
+		Tuple ret = search(template);
+        System.out.println("On a search : " + ret);
+		this.listTuples.remove(ret);
+
 		// On passe la main au read s'il y en a, sinon au write, sinon au autres take
 		taking = false;
 		if (nbReadWaiting > 0) {
 			canRead.signalAll();
 		} else if (nbWriteWaiting > 0) {
+			writing = true;
 			canWrite.signal();
 		} else if (nbTakeWaiting > 0) {
+			taking = true;
 			canTake.signal();
 		}
 		monitor.unlock();
@@ -334,21 +390,18 @@ public class CentralizedLinda implements Linda {
 		// On peut lire
 		nbCurrentReaders++;
 		monitor.unlock();
-		Tuple ret = null;
-		Iterator<Tuple> iterator = this.listTuples.iterator();
-		while (iterator.hasNext()) {
-			ret = iterator.next();
-			if (ret.matches(template)) {
-				break;
-			}
-		}
+		
+		Tuple ret = search(template);
+
 		// On vérifie si on doit réveiller quelqu'un
 		monitor.lock();
 		nbCurrentReaders--;
 		if (nbCurrentReaders == 0) {
 			if (nbWriteWaiting > 0) {
+				writing = true;
 				canWrite.signal();
 			} else if (nbTakeWaiting > 0) {
+				taking = true;
 				canTake.signal();
 			}
 		}
@@ -439,7 +492,6 @@ public class CentralizedLinda implements Linda {
 
 	@Override
 	public void eventRegister(eventMode mode, eventTiming timing, Tuple template, Callback callback) {
-		System.out.println("on entre dans l'event register");
 		if (timing.equals(Linda.eventTiming.IMMEDIATE)) {
 			Tuple t = null;
 			if (mode.equals(Linda.eventMode.READ)) {
@@ -470,12 +522,10 @@ public class CentralizedLinda implements Linda {
 			}
 			monitor.unlock();
 		}
-		System.out.println("on sort de l'event register");
 	}
 
 	@Override
 	public void debug(String prefix) {
 		System.out.println(prefix + " On entre dans debug !");
 	}
-
 }

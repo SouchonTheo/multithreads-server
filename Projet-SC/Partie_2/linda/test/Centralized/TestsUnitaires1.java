@@ -34,7 +34,7 @@ public class TestsUnitaires1 {
             @Override
             public void run() {
                 for(int i = 0; i< 100; i++) {
-                    linda.tryRead(t2);
+                        linda.tryRead(t2);
                     }
             }
         };
@@ -42,7 +42,7 @@ public class TestsUnitaires1 {
             @Override
             public void run() {
                 for(int i = 0; i< 100; i++) {
-                linda.tryRead(t3);
+                    linda.tryRead(t3);
                 }
             }
         };
@@ -55,8 +55,10 @@ public class TestsUnitaires1 {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        System.out.print("Avant les tryTake : ");
         
         Tuple res4 = linda.tryTake(t4);
+        System.out.println("Avant le write : ");
         linda.write(t4);
         Tuple res5 = linda.tryTake(t4);
         
@@ -65,8 +67,5 @@ public class TestsUnitaires1 {
         System.out.println(res4==null);
         System.out.print("Ceci devrait être faux : ");
         System.out.println(res5==null);
-        
-
-
     }
 }
