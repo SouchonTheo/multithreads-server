@@ -11,7 +11,6 @@ import linda.Callback;
 import linda.Linda;
 import linda.InternalCallback;
 
-
 /** Shared memory implementation of Linda. */
 public class CentralizedLinda implements Linda {
 
@@ -30,8 +29,6 @@ public class CentralizedLinda implements Linda {
 	private Condition canRead;
 	private Condition canTake;
 	private Condition canWrite;
-
-
 
 	public CentralizedLinda() {
 		listTuples = new Vector<Tuple>();
@@ -108,7 +105,7 @@ public class CentralizedLinda implements Linda {
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-					if (!timerLaunched){
+					if (!timerLaunched) {
 						timeout = true;
 					}
 					timerLaunched = false;
@@ -121,7 +118,8 @@ public class CentralizedLinda implements Linda {
 	public void write(Tuple t) {
 		if (notNull(t)) {
 			// On vérifie qu'on peut écrire, cad pas de lecteur ou de take ou write.
-			// On ne vérifie pas les writing ou taking car on est dans le moniteur donc il est forcément seul.
+			// On ne vérifie pas les writing ou taking car on est dans le moniteur donc il
+			// est forcément seul.
 			monitor.lock();
 			if (nbCurrentReaders > 0) {
 				try {
@@ -137,13 +135,14 @@ public class CentralizedLinda implements Linda {
 				}
 			}
 
-			// On regarde si ce tuple est voulu par des read ou take (seule partie concurrente)
+			// On regarde si ce tuple est voulu par des read ou take (seule partie
+			// concurrente)
 			Vector<InternalCallback> listICallbacks = getReaders(t);
 			InternalCallback takeCallback = getFirstTaker(t);
 			if (takeCallback == null) {
 				this.listTuples.add(t);
 			}
-			
+
 			// On passe la main au take s'il y en a un, sinon au read, sinon au autres write
 			writing = false;
 			if (nbTakeWaiting > 0) {
@@ -154,7 +153,7 @@ public class CentralizedLinda implements Linda {
 				canWrite.signal();
 			}
 			monitor.unlock();
-			
+
 			// On vérifie les read
 			if (listICallbacks.size() > 0) {
 				Iterator<InternalCallback> iterator = listICallbacks.iterator();
@@ -227,7 +226,8 @@ public class CentralizedLinda implements Linda {
 
 	@Override
 	public Tuple read(Tuple template) {
-		// On vérifie si on peut lire (pas d'écriture ou prise en cours + temps non écoulé)
+		// On vérifie si on peut lire (pas d'écriture ou prise en cours + temps non
+		// écoulé)
 		monitor.lock();
 		if (writing || taking || timeout) {
 			try {
@@ -257,8 +257,7 @@ public class CentralizedLinda implements Linda {
 		if (nbCurrentReaders == 0) {
 			if (nbWriteWaiting > 0) {
 				canWrite.signal();
-			}
-			else if (nbTakeWaiting > 0) {
+			} else if (nbTakeWaiting > 0) {
 				canTake.signal();
 			}
 		}
@@ -266,7 +265,7 @@ public class CentralizedLinda implements Linda {
 			// Si on ne le trouve pas on enregistre le callback puis on attend sa réponse
 			Condition condition = monitor.newCondition();
 			TriggerCallback tCb = new TriggerCallback(condition, monitor);
-			
+
 			this.readers.add(new InternalCallback(template, tCb));
 			try {
 				condition.await();
@@ -278,7 +277,7 @@ public class CentralizedLinda implements Linda {
 		monitor.unlock();
 		return ret;
 	}
-	
+
 	@Override
 	public Tuple tryTake(Tuple template) {
 		monitor.lock();
@@ -295,7 +294,7 @@ public class CentralizedLinda implements Linda {
 				e.printStackTrace();
 			}
 		}
-		
+
 		Tuple ret = null;
 		Iterator<Tuple> iterator = this.listTuples.iterator();
 		while (iterator.hasNext()) {
@@ -320,7 +319,8 @@ public class CentralizedLinda implements Linda {
 
 	@Override
 	public Tuple tryRead(Tuple template) {
-		// On vérifie si on peut lire (pas d'écriture ou prise en cours + temps non écoulé)
+		// On vérifie si on peut lire (pas d'écriture ou prise en cours + temps non
+		// écoulé)
 		monitor.lock();
 		if (writing || taking || timeout) {
 			try {
@@ -348,8 +348,7 @@ public class CentralizedLinda implements Linda {
 		if (nbCurrentReaders == 0) {
 			if (nbWriteWaiting > 0) {
 				canWrite.signal();
-			}
-			else if (nbTakeWaiting > 0) {
+			} else if (nbTakeWaiting > 0) {
 				canTake.signal();
 			}
 		}
@@ -399,7 +398,8 @@ public class CentralizedLinda implements Linda {
 
 	@Override
 	public Collection<Tuple> readAll(Tuple template) {
-		// On vérifie si on peut lire (pas d'écriture ou prise en cours + temps non écoulé)
+		// On vérifie si on peut lire (pas d'écriture ou prise en cours + temps non
+		// écoulé)
 		monitor.lock();
 		if (writing || taking || timeout) {
 			try {
@@ -429,8 +429,7 @@ public class CentralizedLinda implements Linda {
 		if (nbCurrentReaders == 0) {
 			if (nbWriteWaiting > 0) {
 				canWrite.signal();
-			}
-			else if (nbTakeWaiting > 0) {
+			} else if (nbTakeWaiting > 0) {
 				canTake.signal();
 			}
 		}
@@ -460,7 +459,7 @@ public class CentralizedLinda implements Linda {
 					monitor.lock();
 					this.takers.add(new InternalCallback(template, callback));
 					monitor.unlock();
-				}	
+				}
 			}
 		} else {
 			monitor.lock();
