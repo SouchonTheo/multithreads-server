@@ -42,7 +42,7 @@ public class CentralizedLinda implements Linda {
 		timeout = false;
 		writing = false;
 		taking = false;
-		nbThreads = 4;
+		nbThreads = 2;
 		nbCurrentReaders = 0;
 		nbReadWaiting = 0;
 		nbTakeWaiting = 0;
@@ -119,6 +119,15 @@ public class CentralizedLinda implements Linda {
 	}
 
 	private Tuple search(Tuple template) {
+		if (listTuples.size() > 100) {
+			return searchPar(template);
+		} else {
+			return searchSeq(template);
+		}
+	}
+
+
+	private Tuple searchSeq(Tuple template) {
 		Tuple ret = null;
         Iterator<Tuple> iterator = listTuples.iterator();
         while (iterator.hasNext()) {
@@ -135,27 +144,32 @@ public class CentralizedLinda implements Linda {
 		Semaphore sem = new Semaphore(0);
 		Vector<SearchList> threads = new Vector<SearchList>();
 		SearchList t = null;
-		int min, max;
 		int size = this.listTuples.size();
+        int fragmentSize = size / nbThreads;
+		int min = 0;
+        int max = size / nbThreads;
 		for (int i = 0; i < nbThreads; i++) {
-			min = (size/nbThreads) * i;
-			max = (size/nbThreads) * (i+1);
-			
-			List<Tuple> clonedList = (List<Tuple>) this.listTuples.clone();
+            List<Tuple> clonedList = (List<Tuple>) this.listTuples.clone();
 			List<Tuple> sublist = clonedList.subList(min, max);
+            System.out.println("taille de sublist : " + sublist.size());
 			t = new SearchList(sublist, template, sem);
 			threads.add(t);
 			t.start();
+
+			min = max + 1;
+            max = (i == nbThreads - 1) ? (min + fragmentSize) : (size-1) ;
 		}
 		Tuple ret = null;
 		SearchList thread;
 		while(threads.size() > 0){
+            System.out.println("nombre de threads dans threads : " + threads.size());
 			try {
 				sem.acquire();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			Iterator<SearchList> iterator = threads.iterator();
+			List<SearchList> clonedList = (List<SearchList>) threads.clone();
+			Iterator<SearchList> iterator = clonedList.iterator();
 			while(iterator.hasNext()) {
 				thread = iterator.next();
 				ret = thread.getResult();
@@ -166,6 +180,7 @@ public class CentralizedLinda implements Linda {
 					threads.remove(thread);
 				}
 			}
+            System.out.println("ret = " + ret);
 			if (ret != null) {
 				// On l'a trouvé donc on arrête tout
 				for(SearchList thr : threads) {
@@ -300,8 +315,9 @@ public class CentralizedLinda implements Linda {
 		//monitor.unlock();
 
 		// on cherche le tuple dans l'espace
+        System.out.println("On cherche : " + template);
 		Tuple ret = search(template);
-
+        System.out.println("on a trouvé : " + ret);
 		//monitor.lock();
 		if (ret == null) {
 			// Si on ne le trouve pas on enregistre le callback puis on attend sa réponse
