@@ -162,7 +162,7 @@ public class CentralizedLinda implements Linda {
 		Tuple ret = null;
 		SearchList thread;
 		while(threads.size() > 0){
-            System.out.println("nombre de threads dans threads : " + threads.size());
+            System.out.println("nombre de threads dans threads au début de la boucle : " + threads.size());
 			try {
 				sem.acquire();
 			} catch (InterruptedException e) {
@@ -171,13 +171,12 @@ public class CentralizedLinda implements Linda {
 			List<SearchList> clonedList = (List<SearchList>) threads.clone();
 			Iterator<SearchList> iterator = clonedList.iterator();
 			while(iterator.hasNext()) {
+				System.out.println("On passe dans le hasNext()");
 				thread = iterator.next();
 				ret = thread.getResult();
-				if (ret != null) { // On a trouvé le tuple
+				if (!thread.isAlive()) { // On a trouvé le tuple ou le thread a fini
 					threads.remove(thread);
 					break;
-				} else if (!thread.isAlive()) { // au cas ou il soit fini
-					threads.remove(thread);
 				}
 			}
             System.out.println("ret = " + ret);
@@ -188,6 +187,7 @@ public class CentralizedLinda implements Linda {
 				}
 				threads.removeAllElements();
 			}
+            System.out.println("nombre de threads dans threads à la fin de la boucle : " + threads.size());
 		}
 		return ret;
 	}
