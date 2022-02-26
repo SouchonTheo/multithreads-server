@@ -372,7 +372,8 @@ public class CentralizedLinda implements Linda {
 
 		Tuple ret = search(template);
         System.out.println("On a search : " + ret);
-		this.listTuples.remove(ret);
+		if (ret != null)
+			this.listTuples.remove(ret);
 
 		// On passe la main au read s'il y en a, sinon au write, sinon au autres take
 		taking = false;
