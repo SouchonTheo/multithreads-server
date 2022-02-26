@@ -6,18 +6,24 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.Collection;
 
+import java.rmi.*;
+import java.rmi.server.UnicastRemoteObject;
+
 import linda.Callback;
 import linda.Linda;
 import linda.Tuple;
+import linda.shm.CentralizedLinda;
 
 /**
  * Client part of a client/server implementation of Linda.
  * It implements the Linda interface and propagates everything to the server it
  * is connected to.
  */
-public class LindaClient implements Linda {
+public class LindaClient extends UnicastRemoteObject implements Linda, LindaClientInterface {
 
-    private LindaServer lindaimpl;
+    private CentralizedLinda cache = new CentralizedLinda();
+
+    private LindaServerInterface lindaimpl;
 
     /**
      * Initializes the Linda implementation.
@@ -26,9 +32,9 @@ public class LindaClient implements Linda {
      *                  "rmi://localhost:4000/LindaServer" or
      *                  "//localhost:4000/LindaServer".
      */
-    public LindaClient(String serverURI) {
+    public LindaClient(String serverURI) throws RemoteException {
         try {
-            lindaimpl = (LindaServer) Naming.lookup(serverURI);
+            lindaimpl = (LindaServerInterface) Naming.lookup(serverURI);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (RemoteException e) {
@@ -42,6 +48,9 @@ public class LindaClient implements Linda {
     public void write(Tuple t) {
         try {
             lindaimpl.write(t);
+            if (cache.tryRead(t) == null) {
+                cache.write(t);
+            }
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -62,7 +71,12 @@ public class LindaClient implements Linda {
     public Tuple read(Tuple template) {
         Tuple ret = null;
         try {
-            ret = lindaimpl.read(template);
+            ret = cache.tryRead(template);
+            if (ret==null) {
+                ret = lindaimpl.read(template);
+                cache.write(ret);
+            }
+            
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -84,7 +98,11 @@ public class LindaClient implements Linda {
     public Tuple tryRead(Tuple template) {
         Tuple ret = null;
         try {
-            ret = lindaimpl.tryRead(template);
+            ret = cache.tryRead(template);
+            if (ret==null) {
+                ret = lindaimpl.tryRead(template);
+                cache.write(ret);
+            }
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -121,6 +139,10 @@ public class LindaClient implements Linda {
         } catch (RemoteException e) {
             e.printStackTrace();
         }
+    }
+
+    public void destroyInCache(Tuple t) throws RemoteException {
+        cache.tryTake(t);
     }
 
     @Override
