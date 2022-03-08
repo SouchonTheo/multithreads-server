@@ -9,12 +9,14 @@ import java.util.Collection;
 
 import linda.Linda.eventMode;
 import linda.Linda.eventTiming;
+import linda.Linda;
 import linda.Tuple;
 import linda.shm.CentralizedLinda;
 
 public class LindaServerImpl extends UnicastRemoteObject implements LindaServer {
 
     private CentralizedLinda linda;
+    private static Linda ldClient;
 
     protected LindaServerImpl() throws RemoteException {
         this.linda = new linda.shm.CentralizedLinda();
@@ -59,12 +61,7 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     @Override
     public void eventRegister(eventMode mode, eventTiming timing, Tuple template, RemoteCallbackInterface rCallback)
             throws RemoteException {
-        System.out.println("LSI - ER");
         RemoteCallbackClient cb = new RemoteCallbackClient(rCallback);
-        System.out.println("mode : " + mode);
-        System.out.println("timing : " + timing);
-        System.out.println("template : " + template);
-        System.out.println("rCallback : " + rCallback);
         linda.eventRegister(mode, timing, template, cb);
     }
 
@@ -73,15 +70,14 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
         linda.debug(prefix);
     }
 
-    public static void main(String args[]) {
-        int port = 4000;
-        String URL1;
+
+    public static void ServerStart(String url, String nextURL, Integer port) {
         try {
             LindaServerImpl server = new LindaServerImpl();
             LocateRegistry.createRegistry(port);
-            URL1 = "//" + InetAddress.getLocalHost().getHostName() + ":" + port + "/LindaServer";
-            Naming.rebind(URL1, server);
-            System.out.println("Le serveur est démarré sur " + URL1);
+            Naming.rebind(url, server);
+            System.out.println("Le serveur est démarré sur " + url);
+            ldClient = new linda.server.LindaClient(nextURL);
         } catch (RemoteException e) {
             e.printStackTrace();
         } catch (Exception exc) {
