@@ -12,12 +12,14 @@ public class SearchList extends Thread {
     private Tuple template;
     private Tuple result;
     private Semaphore sem;
+    private Boolean done;
 
     public SearchList(List<Tuple> listTuples, Tuple template, Semaphore sem) {
         this.listTuples = listTuples;
         this.template = template;
         this.sem = sem;
         this.result = null;
+        this.done = false;
     }
 
     public void run() {
@@ -29,10 +31,16 @@ public class SearchList extends Thread {
                 result = ret;
             }
         }
+        this.done = true;
         sem.release();
     }
 
     public Tuple getResult() {
         return this.result;
     }
+
+    public Boolean isDone() {
+        return this.done;
+    }
+
 }

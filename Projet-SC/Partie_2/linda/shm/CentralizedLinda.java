@@ -151,18 +151,16 @@ public class CentralizedLinda implements Linda {
 		for (int i = 0; i < nbThreads; i++) {
             List<Tuple> clonedList = (List<Tuple>) this.listTuples.clone();
 			List<Tuple> sublist = clonedList.subList(min, max);
-            System.out.println("taille de sublist : " + sublist.size());
 			t = new SearchList(sublist, template, sem);
 			threads.add(t);
 			t.start();
 
 			min = max + 1;
-            max = (i == nbThreads - 1) ? (min + fragmentSize) : (size-1) ;
+            max = (i == nbThreads - 1) ? (min + fragmentSize) : size ;
 		}
 		Tuple ret = null;
 		SearchList thread;
 		while(threads.size() > 0){
-            System.out.println("nombre de threads dans threads : " + threads.size());
 			try {
 				sem.acquire();
 			} catch (InterruptedException e) {
@@ -173,14 +171,11 @@ public class CentralizedLinda implements Linda {
 			while(iterator.hasNext()) {
 				thread = iterator.next();
 				ret = thread.getResult();
-				if (ret != null) { // On a trouvé le tuple
+				if (ret != null || thread.isDone()) { // On a trouvé le tuple ou alors il a terminé
 					threads.remove(thread);
 					break;
-				} else if (!thread.isAlive()) { // au cas ou il soit fini
-					threads.remove(thread);
 				}
 			}
-            System.out.println("ret = " + ret);
 			if (ret != null) {
 				// On l'a trouvé donc on arrête tout
 				for(SearchList thr : threads) {
@@ -315,9 +310,7 @@ public class CentralizedLinda implements Linda {
 		//monitor.unlock();
 
 		// on cherche le tuple dans l'espace
-        System.out.println("On cherche : " + template);
 		Tuple ret = search(template);
-        System.out.println("on a trouvé : " + ret);
 		//monitor.lock();
 		if (ret == null) {
 			// Si on ne le trouve pas on enregistre le callback puis on attend sa réponse
@@ -352,15 +345,12 @@ public class CentralizedLinda implements Linda {
 	@Override
 	public Tuple tryTake(Tuple template) {
 		monitor.lock();
-        System.out.println("On entre dans tryTake : " + nbCurrentReaders);
 		// On vérifie que l'on peut prendre, c'est à dire qu'il n'y a pas de lecteurs
 		if (nbCurrentReaders > 0) {
 			try {
 				nbTakeWaiting++;
 				launchTimer();
-				System.out.println("le trytake attends");
 				canTake.await();
-				System.out.println("le trytake se reveille");
 				timerLaunched = false;
 				taking = true;
 				nbTakeWaiting--;
@@ -368,10 +358,7 @@ public class CentralizedLinda implements Linda {
 				e.printStackTrace();
 			}
 		}
-        System.out.println("On search : " + template);
-
 		Tuple ret = search(template);
-        System.out.println("On a search : " + ret);
 		if (ret != null)
 			this.listTuples.remove(ret);
 
