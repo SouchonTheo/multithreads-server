@@ -4,31 +4,20 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.locks.ReentrantLock;
-import java.rmi.*;
-import java.rmi.server.UnicastRemoteObject;
 
 import linda.Callback;
 import linda.Linda;
 import linda.Tuple;
-import linda.shm.CentralizedLinda;
 
 /**
  * Client part of a client/server implementation of Linda.
  * It implements the Linda interface and propagates everything to the server it
  * is connected to.
  */
-public class LindaClient extends UnicastRemoteObject implements Linda, LindaClientInterface {
+public class LindaClient implements Linda {
 
-    private CentralizedLinda cache = new CentralizedLinda();
-
-    private LindaServerInterface lindaimpl;
-
-    private ReentrantLock monitor;
-
-    private ArrayList<Tuple> pending;
+    private LindaServer lindaimpl;
 
     /**
      * Initializes the Linda implementation.
@@ -37,9 +26,9 @@ public class LindaClient extends UnicastRemoteObject implements Linda, LindaClie
      *                  "rmi://localhost:4000/LindaServer" or
      *                  "//localhost:4000/LindaServer".
      */
-    public LindaClient(String serverURI) throws RemoteException {
+    public LindaClient(String serverURI) {
         try {
-            lindaimpl = (LindaServerInterface) Naming.lookup(serverURI);
+            lindaimpl = (LindaServer) Naming.lookup(serverURI);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (RemoteException e) {
@@ -47,26 +36,14 @@ public class LindaClient extends UnicastRemoteObject implements Linda, LindaClie
         } catch (NotBoundException e) {
             e.printStackTrace();
         }
-        monitor = new ReentrantLock();
-        pending = new ArrayList<Tuple>();
     }
 
     @Override
     public void write(Tuple t) {
         try {
-            
-            monitor.lock();
-            Tuple temp = cache.tryRead(t);
-            if (temp == null) {
-                cache.write(t);
-            }
-            monitor.unlock();
             lindaimpl.write(t);
-            
         } catch (RemoteException e) {
             e.printStackTrace();
-            //Si il y a une erreur à l'écriture, on supprime l'élément du cache.
-            cache.tryTake(t);
         }
     }
 
@@ -84,33 +61,11 @@ public class LindaClient extends UnicastRemoteObject implements Linda, LindaClie
     @Override
     public Tuple read(Tuple template) {
         Tuple ret = null;
-        monitor.lock();
-        pending.clear();
-        ret = cache.tryRead(template);
-        monitor.unlock();
-
-        if (ret==null) {
-            try {
-                ret = lindaimpl.read(template);
-                monitor.lock();
-                boolean mettre_cache = true;
-                for(Tuple t : pending) {
-                    if (ret.matches(t)) {
-                        mettre_cache = false;
-                        break;
-                    }
-                }
-                if(mettre_cache) {
-                    cache.write(ret);
-                }
-                monitor.unlock();
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-
+        try {
+            ret = lindaimpl.read(template);
+        } catch (RemoteException e) {
+            e.printStackTrace();
         }
-            
-       
         return ret;
     }
 
@@ -128,27 +83,8 @@ public class LindaClient extends UnicastRemoteObject implements Linda, LindaClie
     @Override
     public Tuple tryRead(Tuple template) {
         Tuple ret = null;
-        monitor.lock();
-        pending.clear();
-        ret = cache.tryRead(template);
-        monitor.unlock();
         try {
-            
-            if (ret==null) {
-                ret = lindaimpl.tryRead(template);
-                monitor.lock();
-                boolean mettre_cache = true;
-                for(Tuple t : pending) {
-                    if (ret.matches(t)) {
-                        mettre_cache = false;
-                        break;
-                    }
-                }
-                if(mettre_cache) {
-                    cache.write(ret);
-                }
-                monitor.unlock();
-            }
+            ret = lindaimpl.tryRead(template);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -185,13 +121,6 @@ public class LindaClient extends UnicastRemoteObject implements Linda, LindaClie
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-    }
-
-    public void destroyInCache(Tuple t) throws RemoteException {
-        monitor.lock();
-        cache.tryTake(t);
-        pending.add(t);
-        monitor.unlock();
     }
 
     @Override

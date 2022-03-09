@@ -1,10 +1,11 @@
+
 package linda.test.Centralized;
 
 import linda.*;
 
-public class TestsUnitaires1 {
+public class TestsUnitaires2 {
 
-    /*Test de priorité des accès pour le lecteur rédacteur. Il a servi à trouver une erreur de locks.*/
+    /*Test de priorité des accès pour le lecteur rédacteur. Il a servi à trouver une erreur de blockage.*/
     public static void main(String[] a) {
                 
         final Linda linda = new linda.shm.CentralizedLinda();
@@ -27,22 +28,22 @@ public class TestsUnitaires1 {
         linda.write(t3);
 
         Tuple res1 = linda.tryTake(t2);
-        System.out.print("Ceci devrait etre faux : ");
+        System.out.print("Ceci devrait être faux : ");
         System.out.println(res1==null);
 
         Thread lecture2 = new Thread() {
             @Override
             public void run() {
                 for(int i = 0; i< 100; i++) {
-                    linda.tryRead(t2);
-                }
+                    linda.write(t2);
+                    }
             }
         };
         Thread lecture3 = new Thread() {
             @Override
             public void run() {
                 for(int i = 0; i< 100; i++) {
-                    linda.tryRead(t3);
+                linda.tryTake(t3);
                 }
             }
         };
@@ -55,14 +56,19 @@ public class TestsUnitaires1 {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        Tuple res4 = linda.tryTake(t4);
+        
+        Tuple res4 = linda.read(t4);
+        System.out.println("On write");
         linda.write(t4);
-        Tuple res5 = linda.tryTake(t4);
+        Tuple res5 = linda.read(t4);
         
 
-        System.out.print("Ceci devrait etre vrai : ");
+        System.out.print("Ceci devrait être vrai : ");
         System.out.println(res4==null);
-        System.out.print("Ceci devrait etre faux : ");
+        System.out.print("Ceci devrait être faux : ");
         System.out.println(res5==null);
+        
+
+
     }
 }
