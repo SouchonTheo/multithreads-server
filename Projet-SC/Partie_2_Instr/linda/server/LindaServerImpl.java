@@ -1,4 +1,4 @@
-package linda.MultiServer;
+package linda.server;
 
 import java.net.InetAddress;
 import java.rmi.Naming;
@@ -73,7 +73,8 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
         linda.debug(prefix);
     }
 
-    public static void ServerStart(Integer id, Integer port) {
+    public static void main(String args[]) {
+        int port = 4000;
         String URL1;
         try {
             LindaServerImpl server = new LindaServerImpl();

@@ -1,4 +1,4 @@
-package linda.MultiServer;
+package linda.server;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
