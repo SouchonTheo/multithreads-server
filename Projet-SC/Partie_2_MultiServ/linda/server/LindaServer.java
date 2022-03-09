@@ -22,7 +22,7 @@ public interface LindaServer extends Remote {
     public Collection<Tuple> takeAll(Tuple template) throws RemoteException;
 
     public Collection<Tuple> readAll(Tuple template) throws RemoteException;
-    
+
     public void eventRegister(eventMode mode, eventTiming timing, Tuple template, RemoteCallbackInterface rCallback)
             throws RemoteException;
 
