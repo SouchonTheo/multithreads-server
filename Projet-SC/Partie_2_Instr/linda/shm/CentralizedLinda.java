@@ -52,6 +52,10 @@ public class CentralizedLinda implements Linda {
 		canWrite = monitor.newCondition();
 	}
 
+	public Vector<Tuple> getListTuple(){
+		return this.listTuples;
+	}
+
 	private Boolean notNull(Tuple t) {
 		if (t == null) {
 			return false;
