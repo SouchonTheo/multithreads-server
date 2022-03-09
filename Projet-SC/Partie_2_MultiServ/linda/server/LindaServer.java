@@ -28,4 +28,8 @@ public interface LindaServer extends Remote {
 
     public void debug(String prefix) throws RemoteException;
 
+    // Méthode ajoutée pour le MultiServer
+
+    /** */
+
 }

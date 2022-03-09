@@ -30,32 +30,54 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
 
     @Override
     public Tuple take(Tuple template) throws RemoteException {
-        return linda.take(template);
+        Tuple findTuple = linda.tryTake(template);
+        if (findTuple == null) {
+            findTuple = ldClient.take(template);
+        }
+        return findTuple;
     }
 
     @Override
     public Tuple read(Tuple template) throws RemoteException {
-        return linda.read(template);
+        Tuple findTuple = linda.tryRead(template);
+        if (findTuple == null) {
+            findTuple = ldClient.read(template);
+        }
+        return findTuple;
     }
 
     @Override
     public Tuple tryTake(Tuple template) throws RemoteException {
-        return linda.tryTake(template);
+        Tuple findTuple = linda.tryTake(template);
+        if (findTuple == null) {
+            findTuple = ldClient.tryTake(template);
+        }
+        return findTuple;
     }
 
     @Override
     public Tuple tryRead(Tuple template) throws RemoteException {
-        return linda.tryRead(template);
+        Tuple findTuple = linda.tryRead(template);
+        if (findTuple == null) {
+            findTuple = ldClient.tryRead(template);
+        }
+        return findTuple;
     }
 
     @Override
     public Collection<Tuple> takeAll(Tuple template) throws RemoteException {
-        return linda.takeAll(template);
+        Collection<Tuple> clTuples = ldClient.takeAll(template);
+        Collection<Tuple> clServeur = linda.takeAll(template);
+        clServeur.addAll(clTuples);
+        return clServeur;
     }
 
     @Override
     public Collection<Tuple> readAll(Tuple template) throws RemoteException {
-        return linda.readAll(template);
+        Collection<Tuple> clTuples = ldClient.readAll(template);
+        Collection<Tuple> clServeur = linda.readAll(template);
+        clServeur.addAll(clTuples);
+        return clServeur;
     }
 
     @Override
