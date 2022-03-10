@@ -45,7 +45,7 @@ public class MultiServer {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
-            LindaServerImpl.ServerStart(url, nextURL, initialPort + id);
+            LindaServerImpl.ServerStart(url, nextURL, initialPort + id, nbresServer);
         }
     }
 
