@@ -53,7 +53,23 @@ public class CentralizedLinda implements Linda {
 	}
 
 	public Vector<Tuple> getListTuple(){
-		return this.listTuples;
+		return (Vector<Tuple>) this.listTuples.clone();
+	}
+
+	public int getNbReadBlocked() {
+		return this.readers.size();
+	}
+	public int getNbTakeBlocked() {
+		return this.takers.size();
+	}
+	public int getNbTakeWaiting() {
+		return this.nbTakeWaiting;
+	}
+	public int getNbWriteWaiting() {
+		return this.nbWriteWaiting;
+	}
+	public int getNbTuples() {
+		return this.listTuples.size();
 	}
 
 	private Boolean notNull(Tuple t) {
@@ -155,7 +171,6 @@ public class CentralizedLinda implements Linda {
 		for (int i = 0; i < nbThreads; i++) {
             List<Tuple> clonedList = (List<Tuple>) this.listTuples.clone();
 			List<Tuple> sublist = clonedList.subList(min, max);
-            System.out.println("taille de sublist : " + sublist.size());
 			t = new SearchList(sublist, template, sem);
 			threads.add(t);
 			t.start();
@@ -166,7 +181,6 @@ public class CentralizedLinda implements Linda {
 		Tuple ret = null;
 		SearchList thread;
 		while(threads.size() > 0){
-            System.out.println("nombre de threads dans threads au début de la boucle : " + threads.size());
 			try {
 				sem.acquire();
 			} catch (InterruptedException e) {
@@ -175,7 +189,6 @@ public class CentralizedLinda implements Linda {
 			List<SearchList> clonedList = (List<SearchList>) threads.clone();
 			Iterator<SearchList> iterator = clonedList.iterator();
 			while(iterator.hasNext()) {
-				System.out.println("On passe dans le hasNext()");
 				thread = iterator.next();
 				ret = thread.getResult();
 				if (!thread.isAlive()) { // On a trouvé le tuple ou le thread a fini
@@ -183,7 +196,6 @@ public class CentralizedLinda implements Linda {
 					break;
 				}
 			}
-            System.out.println("ret = " + ret);
 			if (ret != null) {
 				// On l'a trouvé donc on arrête tout
 				for(SearchList thr : threads) {
@@ -191,7 +203,6 @@ public class CentralizedLinda implements Linda {
 				}
 				threads.removeAllElements();
 			}
-            System.out.println("nombre de threads dans threads à la fin de la boucle : " + threads.size());
 		}
 		return ret;
 	}
@@ -319,9 +330,7 @@ public class CentralizedLinda implements Linda {
 		//monitor.unlock();
 
 		// on cherche le tuple dans l'espace
-        System.out.println("On cherche : " + template);
 		Tuple ret = search(template);
-        System.out.println("on a trouvé : " + ret);
 		//monitor.lock();
 		if (ret == null) {
 			// Si on ne le trouve pas on enregistre le callback puis on attend sa réponse
@@ -356,15 +365,12 @@ public class CentralizedLinda implements Linda {
 	@Override
 	public Tuple tryTake(Tuple template) {
 		monitor.lock();
-        System.out.println("On entre dans tryTake : " + nbCurrentReaders);
 		// On vérifie que l'on peut prendre, c'est à dire qu'il n'y a pas de lecteurs
 		if (nbCurrentReaders > 0) {
 			try {
 				nbTakeWaiting++;
 				launchTimer();
-				System.out.println("le trytake attends");
 				canTake.await();
-				System.out.println("le trytake se reveille");
 				timerLaunched = false;
 				taking = true;
 				nbTakeWaiting--;
@@ -372,10 +378,8 @@ public class CentralizedLinda implements Linda {
 				e.printStackTrace();
 			}
 		}
-        System.out.println("On search : " + template);
 
 		Tuple ret = search(template);
-        System.out.println("On a search : " + ret);
 		this.listTuples.remove(ret);
 
 		// On passe la main au read s'il y en a, sinon au write, sinon au autres take
