@@ -28,4 +28,18 @@ public interface LindaServer extends Remote {
 
     public void debug(String prefix) throws RemoteException;
 
+    // Méthode ajoutée pour le MultiServer
+
+    public Tuple take(Tuple template, Integer nbRestant) throws RemoteException;
+
+    public Tuple read(Tuple template, Integer nbRestant) throws RemoteException;
+
+    public Tuple tryTake(Tuple template, Integer nbRestant) throws RemoteException;
+
+    public Tuple tryRead(Tuple template, Integer nbRestant) throws RemoteException;
+
+    public Collection<Tuple> takeAll(Tuple template, Integer nbRestant) throws RemoteException;
+
+    public Collection<Tuple> readAll(Tuple template, Integer nbRestant) throws RemoteException;
+
 }
