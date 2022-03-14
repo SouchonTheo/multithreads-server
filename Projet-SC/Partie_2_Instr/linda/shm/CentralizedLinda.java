@@ -52,8 +52,11 @@ public class CentralizedLinda implements Linda {
 		canWrite = monitor.newCondition();
 	}
 
-	public Vector<Tuple> getListTuple(){
-		return (Vector<Tuple>) this.listTuples.clone();
+	public Vector<Tuple> getListTuple() {
+		monitor.lock();
+		Vector<Tuple> vec = (Vector<Tuple>) this.listTuples.clone();
+		monitor.unlock();
+		return vec;
 	}
 
 	public int getNbReadBlocked() {
@@ -451,7 +454,8 @@ public class CentralizedLinda implements Linda {
 		}
 		// On collecte tous les tuples correspondant au template
 		Collection<Tuple> collectionTuples = new Vector<Tuple>();
-		Iterator<Tuple> iterator = this.listTuples.iterator();
+		Vector<Tuple> copy = (Vector<Tuple>) this.listTuples.clone();
+		Iterator<Tuple> iterator = copy.iterator();
 		Tuple ret = null;
 		while (iterator.hasNext()) {
 			ret = iterator.next();
