@@ -35,7 +35,7 @@ public class TestsUnitaires2 {
             @Override
             public void run() {
                 for(int i = 0; i< 100; i++) {
-                    linda.write(t2);
+                    //linda.write(t2);
                     }
             }
         };
@@ -57,14 +57,15 @@ public class TestsUnitaires2 {
             e.printStackTrace();
         }
         
-        Tuple res4 = linda.read(t4);
+        //Tuple res4 = linda.read(t4);
         System.out.println("On write");
         linda.write(t4);
+        System.out.println("On a fini de write");
         Tuple res5 = linda.read(t4);
         
 
         System.out.print("Ceci devrait être vrai : ");
-        System.out.println(res4==null);
+        //System.out.println(res4==null);
         System.out.print("Ceci devrait être faux : ");
         System.out.println(res5==null);
         

@@ -11,6 +11,7 @@ import java.util.Scanner;
 import java.util.Vector;
 
 import linda.shm.CentralizedLinda;
+import linda.shm.LindaInstru;
 
 public class Instrumentation {
 
@@ -30,13 +31,15 @@ public class Instrumentation {
     private static int nbInvalid = 0;
     private static int currentLine = 0;
     private static List<Integer> invalidLines;
-    private static CentralizedLinda linda;
+    private static List<String> invalidMessages;
+    private static LindaInstru linda;
 
 
     public static void main(String[] args) {
         // Créer le linda
         linda = new linda.shm.CentralizedLinda();
         invalidLines = new ArrayList<Integer>();
+        invalidMessages = new ArrayList<String>();
         if (args.length == 1) {
             file = true;
             readFromFile(args[0]);
@@ -65,7 +68,7 @@ public class Instrumentation {
         System.out.println(ANSI_BLUE + "Etat des processus = " + ANSI_GREEN + "ep " + ANSI_BLUE +"; état des files d'attente = " + ANSI_GREEN + "ef");
         System.out.println(ANSI_BLUE + "Afficher la liste des tuples = " + ANSI_GREEN + "p " + ANSI_BLUE +"; nombre de tuples dans l'espace = " + ANSI_GREEN + "n"); 
         System.out.println(ANSI_BLUE + "Quitter =" + ANSI_GREEN + " q");
-        System.out.println(ANSI_BLUE + "Ecrivez le tuple sous la forme " + ANSI_PURPLE +"[1,foo,...]\n" + ANSI_RESET);
+        System.out.print(ANSI_BLUE + "Ecrivez le tuple sous la forme " + ANSI_PURPLE +"[1,foo,...]\n\n" + ANSI_RESET + "> ");
     }
 
 
@@ -80,11 +83,11 @@ public class Instrumentation {
         } else if (words.length <= 3) {
             return ThreeWordsActions(words);
         } else {
-            invalid();
+            invalid("Commande non reconnue.");
             return true;
         }
     }
-
+    
     private static boolean OneWordAction(String action) {
         if (file) {
             System.out.println(ANSI_PURPLE + "ligne " + currentLine + ", " + ANSI_CYAN + action + ANSI_PURPLE +  " : " + ANSI_RESET);
@@ -94,9 +97,9 @@ public class Instrumentation {
                 System.out.println(ANSI_MAGENTA + "A" + ANSI_YELLOW + "u " + ANSI_MAGENTA + "r" + ANSI_YELLOW + "e" + ANSI_MAGENTA + "v" + ANSI_YELLOW + "o" + ANSI_MAGENTA + "i" + ANSI_YELLOW + "r" + ANSI_MAGENTA + " !" + ANSI_RESET);
                 return false;
             case "ep" :
-                System.out.println("Il y a actuellement " + linda.getNbReadBlocked() + " read blocké(s) et "+ linda.getNbTakeBlocked() + " take blockéts).");
+                System.out.println("Il y a actuellement " + linda.getNbReadBlocked() + " read(s) blocké(s) et "+ linda.getNbTakeBlocked() + " take(s) blocké(s).");
                 break;
-            case "ef" :
+                case "ef" :
                 System.out.println("Il y a actuellement " + linda.getNbWriteWaiting() + " write en attente et "+ linda.getNbTakeWaiting() + " take en attente.");
                 break;
             case "p" :
@@ -105,14 +108,14 @@ public class Instrumentation {
             case "n" :
                 System.out.println(linda.getNbTuples());
                 break;
-            default :
-                invalid();
+                default :
+                invalid("Commande non reconnue.");
                 return true;
-        }
-        return true;
+            }
+            return true;
     }
 
-
+    
     private static boolean ThreeWordsActions(String[] words) {
         boolean lindaMethod = true;
         String methodName = "write";
@@ -135,19 +138,19 @@ public class Instrumentation {
             case "ta" :
                 methodName= "takeAll";
                 break;
-            case "tt" :
+                case "tt" :
                 methodName= "tryTake";
                 break;
             case "s" :
-                sleep(words[1]);
+            sleep(words[1]);
                 lindaMethod = false;
                 break;
             default :
-                invalid();
+                invalid("Commande non reconnue.");
                 return true;
         }
         if (lindaMethod) { // Seulement si l'on veut appeler une méthode de lind
-            try {
+        try {
                 Tuple t = getTuple(words[1]);
                 if (t == null) {
                     return true;
@@ -156,6 +159,9 @@ public class Instrumentation {
                 Integer nbLoop = words.length == 3 ? Integer.parseInt(words[2]) : 1;
                 LaunchAction thread = new LaunchAction(linda, method, t, nbLoop, file);
                 thread.start();
+            } catch (OutOfMemoryError e) {
+                invalid("Trop de threads démarrés. Mémoire maximale de la JVM atteinte.");
+                System.gc();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -172,15 +178,21 @@ public class Instrumentation {
             Serializable[] components = new Serializable[elements.length];
             for (int i = 0; i < elements.length; i++) {
                 try {
-                    int j = Integer.parseInt(elements[i]);
-                    components[i] = j;
-                } catch (Exception e ) {
+                    if (elements[i].endsWith(".class")) {
+                        String className = elements[i].substring(0, elements[i].length() - 6);
+                        Class<?> clazz = Class.forName(className);
+                        components[i] = clazz;
+                    } else {
+                        int j = Integer.parseInt(elements[i]);
+                        components[i] = j;
+                    }
+                } catch (NumberFormatException | ClassNotFoundException e ) {
                     components[i] = elements[i];
                 }
             }
             t = new Tuple(components);
         } else {
-            invalid();
+            invalid("Fromat du tuple incorrect");
         }
         return t;
     }
@@ -195,11 +207,16 @@ public class Instrumentation {
     }
 
     private static void invalid() {
+        invalid("");
+    }
+    private static void invalid(String message) {
         if (file) {
+            invalidMessages.add(message);
             invalidLines.add(currentLine);
             nbInvalid++;
         } else {
-            System.out.println(ANSI_RED + "Saisie invalide" + ANSI_RESET);
+            message = message.equals("") ? "" : " : " + message;
+            System.out.println(ANSI_RED + "Saisie invalide" + message + ANSI_RESET);
         }
     }
 
@@ -229,9 +246,9 @@ public class Instrumentation {
     private static void printResult(long time) {
         System.out.println(ANSI_GREEN_BOLD + "\n\nExécution teminée.");
         if (nbInvalid > 0) {
-            System.out.println(ANSI_RESET + "Il y a eu " + ANSI_RED + nbInvalid + ANSI_RESET + " opération(s) invalide(s) ligne(s) : ");
+            System.out.println(ANSI_RESET + "Il y a eu " + ANSI_RED + nbInvalid + ANSI_RESET + " opération(s) invalide(s).");
             for (Integer i : invalidLines) {
-            System.out.print(i + " ; ");
+                System.out.println("ligne " + i + " : " + invalidMessages.get(i));
             }
         } else {
             System.out.print("Aucune opération invalide !");
@@ -249,6 +266,7 @@ public class Instrumentation {
             e.printStackTrace();
         }
     }
+
 
     private static void doFor(String line, String number) {
         try {

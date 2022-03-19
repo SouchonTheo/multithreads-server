@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
 import linda.Tuple;
 import linda.Callback;
@@ -14,66 +13,32 @@ import linda.Linda;
 import linda.InternalCallback;
 
 /** Shared memory implementation of Linda. */
-public class CentralizedLinda implements Linda {
+public class CentralizedLinda extends LindaInstru {
 
-	private Vector<Tuple> listTuples;
-	private Vector<InternalCallback> readers;
-	private Vector<InternalCallback> takers;
-	private ReentrantLock monitor;
 	private Boolean timerLaunched;
 	private Boolean timeout;
 	private Boolean writing;
 	private Boolean taking;
-	private int nbThreads;
 	private int nbCurrentReaders;
 	private int nbReadWaiting;
-	private int nbTakeWaiting;
-	private int nbWriteWaiting;
 	private Condition canRead;
 	private Condition canTake;
 	private Condition canWrite;
 
 	public CentralizedLinda() {
-		listTuples = new Vector<Tuple>();
-		readers = new Vector<InternalCallback>();
-		takers = new Vector<InternalCallback>();
-		monitor = new ReentrantLock();
+		super();
 		timerLaunched = false;
 		timeout = false;
 		writing = false;
 		taking = false;
-		nbThreads = 2;
 		nbCurrentReaders = 0;
 		nbReadWaiting = 0;
-		nbTakeWaiting = 0;
-		nbWriteWaiting = 0;
 		canRead = monitor.newCondition();
 		canTake = monitor.newCondition();
 		canWrite = monitor.newCondition();
 	}
 
-	public Vector<Tuple> getListTuple() {
-		monitor.lock();
-		Vector<Tuple> vec = (Vector<Tuple>) this.listTuples.clone();
-		monitor.unlock();
-		return vec;
-	}
-
-	public int getNbReadBlocked() {
-		return this.readers.size();
-	}
-	public int getNbTakeBlocked() {
-		return this.takers.size();
-	}
-	public int getNbTakeWaiting() {
-		return this.nbTakeWaiting;
-	}
-	public int getNbWriteWaiting() {
-		return this.nbWriteWaiting;
-	}
-	public int getNbTuples() {
-		return this.listTuples.size();
-	}
+	
 
 	private Boolean notNull(Tuple t) {
 		if (t == null) {
@@ -94,12 +59,13 @@ public class CentralizedLinda implements Linda {
 	private Vector<InternalCallback> getReaders(Tuple t) {
 		Vector<InternalCallback> listICallbacks = new Vector<InternalCallback>();
 		if (this.readers.size() > 0) {
-			Iterator<InternalCallback> iterator = this.readers.iterator();
+			Vector<InternalCallback> copyReaders = (Vector<InternalCallback>) this.readers.clone();
+			Iterator<InternalCallback> iterator = copyReaders.iterator();
 			while (iterator.hasNext()) {
 				InternalCallback iCallback = iterator.next();
 				if (iCallback.getTemplate().contains(t)) {
 					listICallbacks.add(iCallback);
-					this.takers.remove(iCallback);
+					this.readers.remove(iCallback);
 				}
 			}
 		}
@@ -330,11 +296,11 @@ public class CentralizedLinda implements Linda {
 		}
 		// On peut lire
 		nbCurrentReaders++;
-		//monitor.unlock();
+		monitor.unlock();
 
 		// on cherche le tuple dans l'espace
 		Tuple ret = search(template);
-		//monitor.lock();
+		monitor.lock();
 		if (ret == null) {
 			// Si on ne le trouve pas on enregistre le callback puis on attend sa réponse
 			Condition condition = monitor.newCondition();
