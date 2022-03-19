@@ -71,12 +71,13 @@ public class CentralizedLinda implements Linda {
 	private Vector<InternalCallback> getReaders(Tuple t) {
 		Vector<InternalCallback> listICallbacks = new Vector<InternalCallback>();
 		if (this.readers.size() > 0) {
-			Iterator<InternalCallback> iterator = this.readers.iterator();
+			Vector<InternalCallback> copyReaders = (Vector<InternalCallback>) this.readers.clone();
+			Iterator<InternalCallback> iterator = copyReaders.iterator();
 			while (iterator.hasNext()) {
 				InternalCallback iCallback = iterator.next();
 				if (iCallback.getTemplate().contains(t)) {
 					listICallbacks.add(iCallback);
-					this.takers.remove(iCallback);
+					this.readers.remove(iCallback);
 				}
 			}
 		}
