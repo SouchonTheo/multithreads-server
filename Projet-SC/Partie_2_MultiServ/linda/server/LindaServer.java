@@ -30,6 +30,8 @@ public interface LindaServer extends Remote {
 
     // Méthode ajoutée pour le MultiServer
 
+    public void verification(Tuple template, Integer nbRestant) throws RemoteException;
+
     public Tuple take(Tuple template, Integer nbRestant) throws RemoteException;
 
     public Tuple read(Tuple template, Integer nbRestant) throws RemoteException;

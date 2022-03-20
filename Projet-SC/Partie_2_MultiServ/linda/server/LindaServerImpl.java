@@ -1,6 +1,5 @@
 package linda.server;
 
-import java.net.InetAddress;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -9,7 +8,6 @@ import java.util.Collection;
 
 import linda.Linda.eventMode;
 import linda.Linda.eventTiming;
-import linda.Linda;
 import linda.Tuple;
 import linda.shm.CentralizedLinda;
 
@@ -25,7 +23,18 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
 
     @Override
     public void write(Tuple t) throws RemoteException {
-        linda.write(t);
+        ldNextServ.verification(t, nbresServer);
+    }
+
+    @Override
+    public void verification(Tuple template, Integer nbRestant) {
+        if (nbRestant == -1) {
+            System.out.println("Le tuple ne sera pas écrit car il est récupéré par un autre client");
+        } else if (nbRestant > 1) {
+            this.linda.
+        } else {
+            this.linda.write(template);
+        }
     }
 
     @Override
@@ -43,6 +52,8 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
         if (nbRestant > 1) {
             if (findTuple == null) {
                 findTuple = ldNextServ.take(template, nbRestant - 1);
+            } else {
+                findTuple = linda.take(template);
             }
         }
         return findTuple;
@@ -63,6 +74,8 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
         if (nbRestant > 1) {
             if (findTuple == null) {
                 findTuple = ldNextServ.read(template, nbRestant - 1);
+            } else {
+                findTuple = linda.read(template);
             }
         }
         return findTuple;
