@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
 import linda.Tuple;
 import linda.Callback;
@@ -14,43 +13,32 @@ import linda.Linda;
 import linda.InternalCallback;
 
 /** Shared memory implementation of Linda. */
-public class CentralizedLinda implements Linda {
+public class CentralizedLinda extends LindaInstru {
 
-	private Vector<Tuple> listTuples;
-	private Vector<InternalCallback> readers;
-	private Vector<InternalCallback> takers;
-	private ReentrantLock monitor;
 	private Boolean timerLaunched;
 	private Boolean timeout;
 	private Boolean writing;
 	private Boolean taking;
-	private int nbThreads;
 	private int nbCurrentReaders;
 	private int nbReadWaiting;
-	private int nbTakeWaiting;
-	private int nbWriteWaiting;
 	private Condition canRead;
 	private Condition canTake;
 	private Condition canWrite;
 
 	public CentralizedLinda() {
-		listTuples = new Vector<Tuple>();
-		readers = new Vector<InternalCallback>();
-		takers = new Vector<InternalCallback>();
-		monitor = new ReentrantLock();
+		super();
 		timerLaunched = false;
 		timeout = false;
 		writing = false;
 		taking = false;
-		nbThreads = 2;
 		nbCurrentReaders = 0;
 		nbReadWaiting = 0;
-		nbTakeWaiting = 0;
-		nbWriteWaiting = 0;
 		canRead = monitor.newCondition();
 		canTake = monitor.newCondition();
 		canWrite = monitor.newCondition();
 	}
+
+	
 
 	private Boolean notNull(Tuple t) {
 		if (t == null) {
@@ -71,12 +59,13 @@ public class CentralizedLinda implements Linda {
 	private Vector<InternalCallback> getReaders(Tuple t) {
 		Vector<InternalCallback> listICallbacks = new Vector<InternalCallback>();
 		if (this.readers.size() > 0) {
-			Iterator<InternalCallback> iterator = this.readers.iterator();
+			Vector<InternalCallback> copyReaders = (Vector<InternalCallback>) this.readers.clone();
+			Iterator<InternalCallback> iterator = copyReaders.iterator();
 			while (iterator.hasNext()) {
 				InternalCallback iCallback = iterator.next();
 				if (iCallback.getTemplate().contains(t)) {
 					listICallbacks.add(iCallback);
-					this.takers.remove(iCallback);
+					this.readers.remove(iCallback);
 				}
 			}
 		}
@@ -151,7 +140,6 @@ public class CentralizedLinda implements Linda {
 		for (int i = 0; i < nbThreads; i++) {
             List<Tuple> clonedList = (List<Tuple>) this.listTuples.clone();
 			List<Tuple> sublist = clonedList.subList(min, max);
-            System.out.println("taille de sublist : " + sublist.size());
 			t = new SearchList(sublist, template, sem);
 			threads.add(t);
 			t.start();
@@ -162,7 +150,6 @@ public class CentralizedLinda implements Linda {
 		Tuple ret = null;
 		SearchList thread;
 		while(threads.size() > 0){
-            System.out.println("nombre de threads dans threads au début de la boucle : " + threads.size());
 			try {
 				sem.acquire();
 			} catch (InterruptedException e) {
@@ -171,7 +158,6 @@ public class CentralizedLinda implements Linda {
 			List<SearchList> clonedList = (List<SearchList>) threads.clone();
 			Iterator<SearchList> iterator = clonedList.iterator();
 			while(iterator.hasNext()) {
-				System.out.println("On passe dans le hasNext()");
 				thread = iterator.next();
 				ret = thread.getResult();
 				if (!thread.isAlive()) { // On a trouvé le tuple ou le thread a fini
@@ -179,7 +165,6 @@ public class CentralizedLinda implements Linda {
 					break;
 				}
 			}
-            System.out.println("ret = " + ret);
 			if (ret != null) {
 				// On l'a trouvé donc on arrête tout
 				for(SearchList thr : threads) {
@@ -187,7 +172,6 @@ public class CentralizedLinda implements Linda {
 				}
 				threads.removeAllElements();
 			}
-            System.out.println("nombre de threads dans threads à la fin de la boucle : " + threads.size());
 		}
 		return ret;
 	}
@@ -312,13 +296,11 @@ public class CentralizedLinda implements Linda {
 		}
 		// On peut lire
 		nbCurrentReaders++;
-		//monitor.unlock();
+		monitor.unlock();
 
 		// on cherche le tuple dans l'espace
-        System.out.println("On cherche : " + template);
 		Tuple ret = search(template);
-        System.out.println("on a trouvé : " + ret);
-		//monitor.lock();
+		monitor.lock();
 		if (ret == null) {
 			// Si on ne le trouve pas on enregistre le callback puis on attend sa réponse
 			Condition condition = monitor.newCondition();
@@ -352,15 +334,12 @@ public class CentralizedLinda implements Linda {
 	@Override
 	public Tuple tryTake(Tuple template) {
 		monitor.lock();
-        System.out.println("On entre dans tryTake : " + nbCurrentReaders);
 		// On vérifie que l'on peut prendre, c'est à dire qu'il n'y a pas de lecteurs
 		if (nbCurrentReaders > 0) {
 			try {
 				nbTakeWaiting++;
 				launchTimer();
-				System.out.println("le trytake attends");
 				canTake.await();
-				System.out.println("le trytake se reveille");
 				timerLaunched = false;
 				taking = true;
 				nbTakeWaiting--;
@@ -368,10 +347,8 @@ public class CentralizedLinda implements Linda {
 				e.printStackTrace();
 			}
 		}
-        System.out.println("On search : " + template);
 
 		Tuple ret = search(template);
-        System.out.println("On a search : " + ret);
 		this.listTuples.remove(ret);
 
 		// On passe la main au read s'il y en a, sinon au write, sinon au autres take
@@ -443,7 +420,8 @@ public class CentralizedLinda implements Linda {
 		}
 		// On collecte tous les tuples correspondant au template
 		Collection<Tuple> collectionTuples = new Vector<Tuple>();
-		Iterator<Tuple> iterator = this.listTuples.iterator();
+		Vector<Tuple> copy = (Vector<Tuple>) this.listTuples.clone();
+		Iterator<Tuple> iterator = copy.iterator();
 		Tuple ret = null;
 		while (iterator.hasNext()) {
 			ret = iterator.next();

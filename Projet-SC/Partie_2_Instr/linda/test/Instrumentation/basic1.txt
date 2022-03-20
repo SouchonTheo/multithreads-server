@@ -1,0 +1,6 @@
+w [boss] 42
+r [42]
+w [42]
+n
+ta [boss]
+p
