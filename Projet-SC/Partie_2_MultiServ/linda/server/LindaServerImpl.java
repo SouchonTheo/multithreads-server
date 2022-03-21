@@ -23,9 +23,11 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
 
     @Override
     public void write(Tuple t) throws RemoteException {
+
         ldNextServ.verification(t, nbresServer);
     }
 
+    // Faire attention au read/take et à l'ordre....
     @Override
     public void verification(Tuple template, Integer nbRestant) {
         if (nbRestant == -1) {
@@ -42,6 +44,8 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
         Tuple findTuple = linda.tryTake(template);
         if (findTuple == null && nbresServer > 1) {
             findTuple = ldNextServ.take(template, nbresServer);
+        } else if ( findTuple == null) {
+            findTuple = linda.take(template);
         }
         return findTuple;
     }
@@ -52,9 +56,9 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
         if (nbRestant > 1) {
             if (findTuple == null) {
                 findTuple = ldNextServ.take(template, nbRestant - 1);
-            } else {
-                findTuple = linda.take(template);
             }
+        } else if (findTuple == null) {
+            findTuple = linda.take(template);
         }
         return findTuple;
     }
@@ -64,6 +68,8 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
         Tuple findTuple = linda.tryRead(template);
         if (findTuple == null && nbresServer > 1) {
             findTuple = ldNextServ.read(template, nbresServer);
+        } else if (findTuple == null) {
+            findTuple = linda.read(template);
         }
         return findTuple;
     }
@@ -77,6 +83,8 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
             } else {
                 findTuple = linda.read(template);
             }
+        } else if (findTuple == null) {
+            findTuple = linda.read(template);
         }
         return findTuple;
     }
@@ -85,15 +93,16 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     public Tuple tryTake(Tuple template) throws RemoteException {
         Tuple findTuple = linda.tryTake(template);
         if (findTuple == null && nbresServer > 1) {
-            findTuple = ldNextServ.tryTake(template);
+            findTuple = ldNextServ.tryTake(template, nbresServer);
         }
         return findTuple;
     }
 
     @Override
     public Tuple tryTake(Tuple template, Integer nbRestant) throws RemoteException {
-        Tuple findTuple = linda.tryTake(template);
+        Tuple findTuple = null;
         if (nbRestant > 1) {
+            findTuple = linda.tryTake(template);
             if (findTuple == null) {
                 findTuple = ldNextServ.tryTake(template, nbRestant - 1);
             }
@@ -105,15 +114,16 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     public Tuple tryRead(Tuple template) throws RemoteException {
         Tuple findTuple = linda.tryRead(template);
         if (findTuple == null && nbresServer > 1) {
-            findTuple = ldNextServ.tryRead(template);
+            findTuple = ldNextServ.tryRead(template, nbresServer);
         }
         return findTuple;
     }
 
     @Override
     public Tuple tryRead(Tuple template, Integer nbRestant) throws RemoteException {
-        Tuple findTuple = linda.tryRead(template);
+        Tuple findTuple = null;
         if (nbRestant > 1) {
+            findTuple = linda.tryRead(template);
             if (findTuple == null) {
                 findTuple = ldNextServ.tryRead(template, nbRestant - 1);
             }
@@ -134,9 +144,10 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     @Override
     public Collection<Tuple> takeAll(Tuple template, Integer nbRestant) throws RemoteException {
         Collection<Tuple> clTuples;
-        Collection<Tuple> clServeur = linda.takeAll(template);
+        Collection<Tuple> clServeur = null;
         if (nbRestant > 1) {
-            clTuples = ldNextServ.takeAll(template, nbresServer);
+            clServeur = linda.takeAll(template);
+            clTuples = ldNextServ.takeAll(template, nbRestant - 1);
             clServeur.addAll(clTuples);
         }
         return clServeur;
@@ -155,9 +166,10 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     @Override
     public Collection<Tuple> readAll(Tuple template, Integer nbRestant) throws RemoteException {
         Collection<Tuple> clTuples;
-        Collection<Tuple> clServeur = linda.readAll(template);
+        Collection<Tuple> clServeur = null;
         if (nbRestant > 1) {
-            clTuples = ldNextServ.readAll(template, nbresServer);
+            clServeur = linda.readAll(template);
+            clTuples = ldNextServ.readAll(template, nbRestant-1);
             clServeur.addAll(clTuples);
         }
         return clServeur;
