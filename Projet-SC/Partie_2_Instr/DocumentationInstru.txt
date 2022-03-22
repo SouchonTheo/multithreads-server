@@ -5,11 +5,40 @@ Documentation de l'outils d'instrumentation :
 On compile avec javac linda/Instrumentation.java
 
 On lance grâce à la commande java linda/Instrumentation
-Pour utiliser un fichier .txt, on peut mettre son nom en paramètre.
+Pour utiliser un fichier, on peut mettre son nom en paramètre.
 
-2. Version interpréteur de commande :
+
+2. Version interpréteur de commandes :
 
 Lorsque le menu s'affiche, vous pouvez ensuite selectionner une commande.
+
+
+3. Version interpréteur de fichiers :
+
+Chaque instruction doit être écrite sur une ligne différente.
+On dispose de nouvelles commandes :
+    - s <temps> : permet de faire un sleep du temps donné (en milliseconde)
+    - for <nbRepetition> instruction1 ; instruction2 ; ...
+Permet de mettre plusiseurs instructions comme dans une boucle for classique. Chaque itération est effectuée dans un thread différent.
+Il faut donc faire attention à ne pas faire trop d'itérations dans le for pour ne pas créer trop de threads.
+
+
+4. Informations générales :
+Voici lescommandes que l'on peut utiliser :
+    - write : w
+    - read : r, readAll : ra, tryRead : tr
+    - take : t, takeAll : ta, tryTake : tt
+    - etat des processus : ep (Nombre de reads et takes bloqués)
+    - etat des files : ef (Nombre de writes et takes en attente)
+    - afficher la liste des tuples : p
+    - afficher le nombre de tuple dans l'espace : n
+
 Les commandes de type write/take/read s'utilisent de la façon suivante :
 w [1] 3 permet de lancer 3 write sur le linda.
+Le nombre de répétitions de la commande est optionnel.
 Attention, ces appels s'effectuent les uns à la suite des autres.
+
+Pour écrire un tuple, on utilise les []. Chaque élément est séparé par une virgule.
+Les chaines de caractères ne sont pas entourées de "".
+Pour mettre des classes, on metle nom complet de la classe.
+Exemple : [1, chaine_de_caractère, java.lang.Integer.class, 2.0]

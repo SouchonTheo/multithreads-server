@@ -187,7 +187,12 @@ public class Instrumentation {
                         components[i] = j;
                     }
                 } catch (NumberFormatException | ClassNotFoundException e ) {
-                    components[i] = elements[i];
+                    try {
+                        float f = Float.parseFloat(elements[i]);
+                        components[i] = f;
+                    } catch (NumberFormatException excep) {
+                        components[i] = elements[i];
+                    }
                 }
             }
             t = new Tuple(components);
