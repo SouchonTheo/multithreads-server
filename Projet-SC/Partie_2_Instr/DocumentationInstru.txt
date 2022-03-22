@@ -1,0 +1,15 @@
+Documentation de l'outils d'instrumentation :
+
+1. Lancer le programme :
+
+On compile avec javac linda/Instrumentation.java
+
+On lance grâce à la commande java linda/Instrumentation
+Pour utiliser un fichier .txt, on peut mettre son nom en paramètre.
+
+2. Version interpréteur de commande :
+
+Lorsque le menu s'affiche, vous pouvez ensuite selectionner une commande.
+Les commandes de type write/take/read s'utilisent de la façon suivante :
+w [1] 3 permet de lancer 3 write sur le linda.
+Attention, ces appels s'effectuent les uns à la suite des autres.
