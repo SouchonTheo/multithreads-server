@@ -4,10 +4,14 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Vector;
 
 import linda.Linda.eventMode;
 import linda.Linda.eventTiming;
+import linda.InternalCallback;
 import linda.Tuple;
 import linda.shm.CentralizedLinda;
 
@@ -23,20 +27,43 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
 
     @Override
     public void write(Tuple t) throws RemoteException {
+        Vector<InternalCallback> readers;
+        InternalCallback taker;
+        taker = linda.getFirstTaker(t);
+        if (taker == null) {
+            taker = ldNextServ.collectTake(t, nbresServer - 1);
+        }
+        readers = linda.getReaders(t);
+        readers.addAll(ldNextServ.collectReaders(t, nbresServer - 1));
+        for (InternalCallback reader : readers) {
+            reader.getCallback().call(t);
+        }
 
-        ldNextServ.verification(t, nbresServer);
+        if (true) {
+            this.linda.write(t);
+        }
     }
 
-    // Faire attention au read/take et à l'ordre....
     @Override
-    public void verification(Tuple template, Integer nbRestant) {
-        if (nbRestant == -1) {
-            System.out.println("Le tuple ne sera pas écrit car il est récupéré par un autre client");
-        } else if (nbRestant > 1) {
-            this.linda.
-        } else {
-            this.linda.write(template);
+    public Vector<InternalCallback> collectReaders(Tuple template, Integer nbRestant) throws RemoteException {
+        Vector<InternalCallback> readers = null;
+        if (nbRestant > 1) {
+            readers = linda.getReaders(template);
+            readers.addAll(ldNextServ.collectReaders(template, nbRestant - 1));
         }
+        return readers;
+    }
+
+    @Override
+    public InternalCallback collectTake(Tuple template, Integer nbRestant) throws RemoteException {
+        InternalCallback taker = null;
+        if (nbRestant > 1) {
+            taker = linda.getFirstTaker(template);
+            if (taker == null) {
+                taker = ldNextServ.collectTake(template, nbresServer - 1);
+            }
+        }
+        return taker;
     }
 
     @Override
@@ -52,12 +79,13 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
 
     @Override
     public Tuple take(Tuple template, Integer nbRestant) throws RemoteException {
-        Tuple findTuple = linda.tryTake(template);
+        Tuple findTuple;
         if (nbRestant > 1) {
+            findTuple = linda.tryTake(template);
             if (findTuple == null) {
                 findTuple = ldNextServ.take(template, nbRestant - 1);
             }
-        } else if (findTuple == null) {
+        } else {
             findTuple = linda.take(template);
         }
         return findTuple;
@@ -76,14 +104,13 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     
     @Override
     public Tuple read(Tuple template, Integer nbRestant) throws RemoteException {
-        Tuple findTuple = linda.tryRead(template);
+        Tuple findTuple;
         if (nbRestant > 1) {
+            findTuple = linda.tryRead(template);
             if (findTuple == null) {
                 findTuple = ldNextServ.read(template, nbRestant - 1);
-            } else {
-                findTuple = linda.read(template);
             }
-        } else if (findTuple == null) {
+        } else {
             findTuple = linda.read(template);
         }
         return findTuple;
