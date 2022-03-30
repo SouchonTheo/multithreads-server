@@ -32,9 +32,9 @@ public interface LindaServer extends Remote {
 
     // Méthode ajoutée pour le MultiServer
 
-    public Vector<InternalCallback> collectReaders(Tuple template, Integer nbRestant) throws RemoteException;
+    public void invokeReaders(Tuple template, Integer nbRestant) throws RemoteException;
 
-    public InternalCallback collectTake(Tuple template, Integer nbRestant) throws RemoteException;
+    public Boolean invokeTaker(Tuple template, Integer nbRestant) throws RemoteException;
 
     public Tuple take(Tuple template, Integer nbRestant) throws RemoteException;
 

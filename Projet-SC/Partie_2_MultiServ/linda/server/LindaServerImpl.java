@@ -4,9 +4,7 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Vector;
 
 import linda.Linda.eventMode;
@@ -20,50 +18,63 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     private CentralizedLinda linda;
     private static LindaServer ldNextServ;
     private static Integer nbresServer;
+    private Integer port;
 
-    protected LindaServerImpl() throws RemoteException {
+    protected LindaServerImpl(Integer port) throws RemoteException {
         this.linda = new linda.shm.CentralizedLinda();
+        this.port = port;
     }
 
     @Override
     public void write(Tuple t) throws RemoteException {
-        Vector<InternalCallback> readers;
-        InternalCallback taker;
-        taker = linda.getFirstTaker(t);
-        if (taker == null) {
-            taker = ldNextServ.collectTake(t, nbresServer - 1);
-        }
+        Vector<InternalCallback> readers = new Vector<InternalCallback>();
         readers = linda.getReaders(t);
-        readers.addAll(ldNextServ.collectReaders(t, nbresServer - 1));
         for (InternalCallback reader : readers) {
             reader.getCallback().call(t);
         }
-
-        if (true) {
+        invokeReaders(t, nbresServer - 1);
+        InternalCallback taker = linda.getFirstTaker(t);
+        Boolean cond = false;
+        if (taker == null) {
+            System.out.println("Port du serveur : " + port + " n'a pas trouvé de take il passe au suivant");
+            cond = ldNextServ.invokeTaker(t, nbresServer - 1);
+        } else {
+            cond = true;
+        }
+        if (cond) {
+            System.out.println(taker);
+            taker.getCallback().call(t);
+            System.out.println("take sur le serveur : " + port);
+        } else {
             this.linda.write(t);
         }
     }
 
     @Override
-    public Vector<InternalCallback> collectReaders(Tuple template, Integer nbRestant) throws RemoteException {
-        Vector<InternalCallback> readers = null;
-        if (nbRestant > 1) {
-            readers = linda.getReaders(template);
-            readers.addAll(ldNextServ.collectReaders(template, nbRestant - 1));
+    public void invokeReaders(Tuple template, Integer nbRestant) throws RemoteException {
+        Vector<InternalCallback> readers = new Vector<InternalCallback>();
+        readers = linda.getReaders(template);
+        for (InternalCallback reader : readers) {
+            reader.getCallback().call(template);
         }
-        return readers;
+        if (nbRestant > 2) {
+            ldNextServ.invokeReaders(template, nbRestant - 1);
+        }
     }
 
     @Override
-    public InternalCallback collectTake(Tuple template, Integer nbRestant) throws RemoteException {
-        InternalCallback taker = null;
-        if (nbRestant > 1) {
-            taker = linda.getFirstTaker(template);
-            if (taker == null) {
-                taker = ldNextServ.collectTake(template, nbresServer - 1);
+    public Boolean invokeTaker(Tuple template, Integer nbRestant) throws RemoteException {
+        Boolean cond = false;
+        InternalCallback taker = linda.getFirstTaker(template);
+        if (taker == null ) {
+            if (nbRestant > 2) {
+                cond = ldNextServ.invokeTaker(template, nbRestant - 1);
             }
+        } else {
+            taker.getCallback().call(template);
+            cond = true;
         }
-        return taker;
+        return cond;
     }
 
     @Override
@@ -218,11 +229,11 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     public static void ServerStart(String url, String nextURL, Integer port, Integer nbServer) {
         try {
             nbresServer = nbServer;
-            LindaServerImpl server = new LindaServerImpl();
+            LindaServerImpl server = new LindaServerImpl(port);
             LocateRegistry.createRegistry(port);
             Naming.rebind(url, server);
-            System.out.println("Le serveur est démarré sur " + url);
             ldNextServ = (LindaServer) Naming.lookup(nextURL);
+            System.out.println("Le serveur est démarré sur " + url);
         } catch (RemoteException e) {
             e.printStackTrace();
         } catch (Exception exc) {
