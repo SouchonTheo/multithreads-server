@@ -48,4 +48,5 @@ public interface LindaServer extends Remote {
 
     public Collection<Tuple> readAll(Tuple template, Integer nbRestant) throws RemoteException;
 
+
 }

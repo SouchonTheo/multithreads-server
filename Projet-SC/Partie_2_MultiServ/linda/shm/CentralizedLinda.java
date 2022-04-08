@@ -76,6 +76,7 @@ public class CentralizedLinda extends LindaInstru {
 			while (iterator.hasNext()) {
 				InternalCallback iCallback = iterator.next();
 				if (iCallback.getTemplate().contains(t)) {
+				//if (iCallback.getTemplate().matches(t)) {
 					listICallbacks.add(iCallback);
 					this.takers.remove(iCallback);
 				}

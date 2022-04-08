@@ -14,17 +14,21 @@ import linda.Tuple;
 import linda.shm.CentralizedLinda;
 
 public class LindaServerImpl extends UnicastRemoteObject implements LindaServer {
-
+    
     private CentralizedLinda linda;
-    private static LindaServer ldNextServ;
+    private LindaServer ldNextServ;
     private static Integer nbresServer;
     private Integer port;
-
+    
     protected LindaServerImpl(Integer port) throws RemoteException {
         this.linda = new linda.shm.CentralizedLinda();
         this.port = port;
     }
-
+    
+    private void setNextServ(LindaServer lookup) {
+        this.ldNextServ = lookup;
+    }
+    
     @Override
     public void write(Tuple t) throws RemoteException {
         Vector<InternalCallback> readers = new Vector<InternalCallback>();
@@ -36,16 +40,15 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
         InternalCallback taker = linda.getFirstTaker(t);
         Boolean cond = false;
         if (taker == null) {
-            System.out.println("Port du serveur : " + port + " n'a pas trouvé de take il passe au suivant");
             cond = ldNextServ.invokeTaker(t, nbresServer - 1);
         } else {
+            System.out.println("on call le callback sur le serveur originaire de la demande");
+            taker.getCallback().call(t);
             cond = true;
         }
-        if (cond) {
-            System.out.println(taker);
-            taker.getCallback().call(t);
-            System.out.println("take sur le serveur : " + port);
-        } else {
+        System.out.println("Avant la cond" + cond);
+        if (!cond) {
+            System.out.println("On écrit le tuble : " + t + " sur le port " + port);
             this.linda.write(t);
         }
     }
@@ -151,6 +154,7 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     @Override
     public Tuple tryRead(Tuple template) throws RemoteException {
         Tuple findTuple = linda.tryRead(template);
+        System.out.println("tryRead sur le port " + this.port + "avec pour tuple " + findTuple);
         if (findTuple == null && nbresServer > 1) {
             findTuple = ldNextServ.tryRead(template, nbresServer);
         }
@@ -162,6 +166,7 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
         Tuple findTuple = null;
         if (nbRestant > 1) {
             findTuple = linda.tryRead(template);
+            System.out.println("tryRead sur le port " + this.port + "avec pour tuple " + findTuple);
             if (findTuple == null) {
                 findTuple = ldNextServ.tryRead(template, nbRestant - 1);
             }
@@ -232,7 +237,7 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
             LindaServerImpl server = new LindaServerImpl(port);
             LocateRegistry.createRegistry(port);
             Naming.rebind(url, server);
-            ldNextServ = (LindaServer) Naming.lookup(nextURL);
+            server.setNextServ((LindaServer) Naming.lookup(nextURL));
             System.out.println("Le serveur est démarré sur " + url);
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -240,6 +245,7 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
             exc.printStackTrace();
         }
     }
+
 
 
 }
