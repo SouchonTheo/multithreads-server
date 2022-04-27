@@ -38,7 +38,5 @@ public class BasicTestAsyncCallback {
         linda1.write(t3);
 
         linda1.debug("(2)");
-
     }
-
 }

@@ -31,25 +31,15 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     
     @Override
     public void write(Tuple t) throws RemoteException {
-        Vector<InternalCallback> readers = new Vector<InternalCallback>();
-        readers = linda.getReaders(t);
-        for (InternalCallback reader : readers) {
-            reader.getCallback().call(t);
-        }
         invokeReaders(t, nbresServer - 1);
         InternalCallback taker = linda.getFirstTaker(t);
-        Boolean cond = false;
         if (taker == null) {
-            cond = ldNextServ.invokeTaker(t, nbresServer - 1);
+            Boolean cond = ldNextServ.invokeTaker(t, nbresServer - 1);
+            if (!cond) {
+                this.linda.write(t);
+            }
         } else {
-            System.out.println("on call le callback sur le serveur originaire de la demande");
             taker.getCallback().call(t);
-            cond = true;
-        }
-        System.out.println("Avant la cond" + cond);
-        if (!cond) {
-            System.out.println("On écrit le tuble : " + t + " sur le port " + port);
-            this.linda.write(t);
         }
     }
 
@@ -60,7 +50,7 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
         for (InternalCallback reader : readers) {
             reader.getCallback().call(template);
         }
-        if (nbRestant > 2) {
+        if (nbRestant > 1) {
             ldNextServ.invokeReaders(template, nbRestant - 1);
         }
     }
@@ -70,7 +60,7 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
         Boolean cond = false;
         InternalCallback taker = linda.getFirstTaker(template);
         if (taker == null ) {
-            if (nbRestant > 2) {
+            if (nbRestant > 1) {
                 cond = ldNextServ.invokeTaker(template, nbRestant - 1);
             }
         } else {
@@ -154,7 +144,6 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     @Override
     public Tuple tryRead(Tuple template) throws RemoteException {
         Tuple findTuple = linda.tryRead(template);
-        System.out.println("tryRead sur le port " + this.port + "avec pour tuple " + findTuple);
         if (findTuple == null && nbresServer > 1) {
             findTuple = ldNextServ.tryRead(template, nbresServer);
         }
@@ -166,7 +155,6 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
         Tuple findTuple = null;
         if (nbRestant > 1) {
             findTuple = linda.tryRead(template);
-            System.out.println("tryRead sur le port " + this.port + "avec pour tuple " + findTuple);
             if (findTuple == null) {
                 findTuple = ldNextServ.tryRead(template, nbRestant - 1);
             }
@@ -245,7 +233,4 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
             exc.printStackTrace();
         }
     }
-
-
-
 }

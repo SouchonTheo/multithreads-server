@@ -1,4 +1,4 @@
-package linda.test.Client_Serveur;
+package linda.test.Multi_Serv;
 
 import java.util.Vector;
 
