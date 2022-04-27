@@ -2,7 +2,9 @@ package linda.server;
 
 import java.rmi.*;
 import java.util.Collection;
+import java.util.Vector;
 
+import linda.InternalCallback;
 import linda.Tuple;
 import linda.Linda.eventMode;
 import linda.Linda.eventTiming;
@@ -30,7 +32,9 @@ public interface LindaServer extends Remote {
 
     // Méthode ajoutée pour le MultiServer
 
-    public void verification(Tuple template, Integer nbRestant) throws RemoteException;
+    public void invokeReaders(Tuple template, Integer nbRestant) throws RemoteException;
+
+    public Boolean invokeTaker(Tuple template, Integer nbRestant) throws RemoteException;
 
     public Tuple take(Tuple template, Integer nbRestant) throws RemoteException;
 
@@ -43,5 +47,6 @@ public interface LindaServer extends Remote {
     public Collection<Tuple> takeAll(Tuple template, Integer nbRestant) throws RemoteException;
 
     public Collection<Tuple> readAll(Tuple template, Integer nbRestant) throws RemoteException;
+
 
 }

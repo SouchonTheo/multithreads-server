@@ -13,8 +13,9 @@ import linda.Callback;
 import linda.Linda;
 import linda.InternalCallback;
 
+
 /** Shared memory implementation of Linda. */
-public class CentralizedLinda implements Linda {
+public class CentralizedLinda extends LindaInstru {
 
 	private Vector<Tuple> listTuples;
 	private Vector<InternalCallback> readers;
@@ -68,13 +69,14 @@ public class CentralizedLinda implements Linda {
 		}
 	}
 
-	private Vector<InternalCallback> getReaders(Tuple t) {
+	public Vector<InternalCallback> getReaders(Tuple t) {
 		Vector<InternalCallback> listICallbacks = new Vector<InternalCallback>();
 		if (this.readers.size() > 0) {
 			Iterator<InternalCallback> iterator = this.readers.iterator();
 			while (iterator.hasNext()) {
 				InternalCallback iCallback = iterator.next();
 				if (iCallback.getTemplate().contains(t)) {
+				//if (iCallback.getTemplate().matches(t)) {
 					listICallbacks.add(iCallback);
 					this.takers.remove(iCallback);
 				}
@@ -83,7 +85,7 @@ public class CentralizedLinda implements Linda {
 		return listICallbacks;
 	}
 
-	private InternalCallback getFirstTaker(Tuple t) {
+	public InternalCallback getFirstTaker(Tuple t) {
 		InternalCallback takeCb = null;
 		if (this.takers.size() > 0) {
 			Iterator<InternalCallback> iterator = this.takers.iterator();

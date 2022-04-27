@@ -5,38 +5,79 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
+import java.util.Vector;
 
 import linda.Linda.eventMode;
 import linda.Linda.eventTiming;
+import linda.InternalCallback;
 import linda.Tuple;
 import linda.shm.CentralizedLinda;
 
 public class LindaServerImpl extends UnicastRemoteObject implements LindaServer {
-
+    
     private CentralizedLinda linda;
-    private static LindaServer ldNextServ;
+    private LindaServer ldNextServ;
     private static Integer nbresServer;
-
-    protected LindaServerImpl() throws RemoteException {
+    private Integer port;
+    
+    protected LindaServerImpl(Integer port) throws RemoteException {
         this.linda = new linda.shm.CentralizedLinda();
+        this.port = port;
     }
-
+    
+    private void setNextServ(LindaServer lookup) {
+        this.ldNextServ = lookup;
+    }
+    
     @Override
     public void write(Tuple t) throws RemoteException {
-
-        ldNextServ.verification(t, nbresServer);
+        Vector<InternalCallback> readers = new Vector<InternalCallback>();
+        readers = linda.getReaders(t);
+        for (InternalCallback reader : readers) {
+            reader.getCallback().call(t);
+        }
+        invokeReaders(t, nbresServer - 1);
+        InternalCallback taker = linda.getFirstTaker(t);
+        Boolean cond = false;
+        if (taker == null) {
+            cond = ldNextServ.invokeTaker(t, nbresServer - 1);
+        } else {
+            System.out.println("on call le callback sur le serveur originaire de la demande");
+            taker.getCallback().call(t);
+            cond = true;
+        }
+        System.out.println("Avant la cond" + cond);
+        if (!cond) {
+            System.out.println("On écrit le tuble : " + t + " sur le port " + port);
+            this.linda.write(t);
+        }
     }
 
-    // Faire attention au read/take et à l'ordre....
     @Override
-    public void verification(Tuple template, Integer nbRestant) {
-        if (nbRestant == -1) {
-            System.out.println("Le tuple ne sera pas écrit car il est récupéré par un autre client");
-        } else if (nbRestant > 1) {
-            this.linda.
-        } else {
-            this.linda.write(template);
+    public void invokeReaders(Tuple template, Integer nbRestant) throws RemoteException {
+        Vector<InternalCallback> readers = new Vector<InternalCallback>();
+        readers = linda.getReaders(template);
+        for (InternalCallback reader : readers) {
+            reader.getCallback().call(template);
         }
+        if (nbRestant > 2) {
+            ldNextServ.invokeReaders(template, nbRestant - 1);
+        }
+    }
+
+    @Override
+    public Boolean invokeTaker(Tuple template, Integer nbRestant) throws RemoteException {
+        Boolean cond = false;
+        InternalCallback taker = linda.getFirstTaker(template);
+        if (taker == null ) {
+            if (nbRestant > 2) {
+                cond = ldNextServ.invokeTaker(template, nbRestant - 1);
+            }
+        } else {
+            taker.getCallback().call(template);
+            cond = true;
+        }
+        return cond;
     }
 
     @Override
@@ -52,12 +93,13 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
 
     @Override
     public Tuple take(Tuple template, Integer nbRestant) throws RemoteException {
-        Tuple findTuple = linda.tryTake(template);
+        Tuple findTuple;
         if (nbRestant > 1) {
+            findTuple = linda.tryTake(template);
             if (findTuple == null) {
                 findTuple = ldNextServ.take(template, nbRestant - 1);
             }
-        } else if (findTuple == null) {
+        } else {
             findTuple = linda.take(template);
         }
         return findTuple;
@@ -76,14 +118,13 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     
     @Override
     public Tuple read(Tuple template, Integer nbRestant) throws RemoteException {
-        Tuple findTuple = linda.tryRead(template);
+        Tuple findTuple;
         if (nbRestant > 1) {
+            findTuple = linda.tryRead(template);
             if (findTuple == null) {
                 findTuple = ldNextServ.read(template, nbRestant - 1);
-            } else {
-                findTuple = linda.read(template);
             }
-        } else if (findTuple == null) {
+        } else {
             findTuple = linda.read(template);
         }
         return findTuple;
@@ -113,6 +154,7 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     @Override
     public Tuple tryRead(Tuple template) throws RemoteException {
         Tuple findTuple = linda.tryRead(template);
+        System.out.println("tryRead sur le port " + this.port + "avec pour tuple " + findTuple);
         if (findTuple == null && nbresServer > 1) {
             findTuple = ldNextServ.tryRead(template, nbresServer);
         }
@@ -124,6 +166,7 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
         Tuple findTuple = null;
         if (nbRestant > 1) {
             findTuple = linda.tryRead(template);
+            System.out.println("tryRead sur le port " + this.port + "avec pour tuple " + findTuple);
             if (findTuple == null) {
                 findTuple = ldNextServ.tryRead(template, nbRestant - 1);
             }
@@ -191,17 +234,18 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     public static void ServerStart(String url, String nextURL, Integer port, Integer nbServer) {
         try {
             nbresServer = nbServer;
-            LindaServerImpl server = new LindaServerImpl();
+            LindaServerImpl server = new LindaServerImpl(port);
             LocateRegistry.createRegistry(port);
             Naming.rebind(url, server);
+            server.setNextServ((LindaServer) Naming.lookup(nextURL));
             System.out.println("Le serveur est démarré sur " + url);
-            ldNextServ = (LindaServer) Naming.lookup(nextURL);
         } catch (RemoteException e) {
             e.printStackTrace();
         } catch (Exception exc) {
             exc.printStackTrace();
         }
     }
+
 
 
 }
