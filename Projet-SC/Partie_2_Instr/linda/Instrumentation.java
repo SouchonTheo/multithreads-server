@@ -173,7 +173,7 @@ public class Instrumentation {
                 invalid("Commande non reconnue.");
                 return true;
         }
-        if (lindaMethod) { // Seulement si l'on veut appeler une méthode de lind
+        if (lindaMethod) { // Seulement si l'on veut appeler une méthode de linda
         try {
                 Tuple t = getTuple(words[1]);
                 if (t == null) {
@@ -315,9 +315,15 @@ public class Instrumentation {
     }
 
 
-    private static class ServersCreation extends Thread {
+    private static class MultiServersCreation extends Thread {
         public void run() {
             (new MultiServer()).startServeur(3);
+        }
+    }
+
+    private static class CacheServersCreation extends Thread {
+        public void run() {
+            linda.Cache.LindaServer.startServeur();
         }
     }
 
@@ -330,11 +336,13 @@ public class Instrumentation {
                 realName = "parallèle";
                 break;
             case "c" :
-                linda = new CentralisedLindaCache();
+                CacheServersCreation sccThread;
+                sccThread.start();
+                linda = new linda.Cache.LindaClient();
                 realName = "cache";
                 break;
             case "m" :
-                ServersCreation scThread;
+                MultiServersCreation scThread;
                 scThread.start();
                 linda = new linda.Multiserver.LindaClient("//localhost:4000/LindaServer");
                 //Linda linda1 = new linda.server.LindaClient("//localhost:4002/LindaServer");
