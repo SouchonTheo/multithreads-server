@@ -6,6 +6,13 @@ On compile avec javac linda/Instrumentation.java
 
 On lance grâce à la commande java linda/Instrumentation
 Pour utiliser un fichier, on peut mettre son nom en paramètre.
+La version de linda utilisée de base sera la basique. Pour la changer, il faut mettre un argument en plus :
+    - "p" pour parallèle
+    - "m" pour multi serveurs
+    - "c" pour cache
+
+Lorsque l'on veut spécifier la version et mettre un fichier, il faut commencer par la version comme ceci :
+java linda/Instrumentation <version> <fichier>
 
 
 2. Version interpréteur de commandes :
@@ -31,7 +38,8 @@ Voici lescommandes que l'on peut utiliser :
     - etat des processus : ep (Nombre de reads et takes bloqués)
     - etat des files : ef (Nombre de writes et takes en attente)
     - afficher la liste des tuples : p
-    - afficher le nombre de tuple dans l'espace : n
+    - afficher le nombre de tuple dans l'esp                linda = new linda.Multiserver.LindaClient("//localhost:4000/LindaServer");
+ace : n
 
 Les commandes de type write/take/read s'utilisent de la façon suivante :
 w [1] 3 permet de lancer 3 write sur le linda.
