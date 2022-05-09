@@ -10,7 +10,10 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Vector;
 
-import linda.shm.CentralizedLinda;
+import linda.server.LindaClient;
+import linda.shm.CentralisedLindaBase;
+import linda.shm.CentralisedLindaCache;
+import linda.shm.CentralisedLindaPar;
 import linda.shm.LindaInstru;
 
 public class Instrumentation {
@@ -33,17 +36,35 @@ public class Instrumentation {
     private static List<Integer> invalidLines;
     private static List<String> invalidMessages;
     private static LindaInstru linda;
+    private static String realName = "basique";
+
 
 
     public static void main(String[] args) {
         // Créer le linda
-        linda = new linda.shm.CentralizedLinda();
         invalidLines = new ArrayList<Integer>();
         invalidMessages = new ArrayList<String>();
-        if (args.length == 1) {
-            file = true;
-            readFromFile(args[0]);
-        } else {
+        boolean ok = true;
+
+        if (args.length == 2) {
+            ok = defineLinda(args[0]);
+            if (ok) {
+                file = true;
+                readFromFile(args[1]);
+            } else {
+                System.out.println(ANSI_RED + "Version de linda inconnue." + ANSI_RESET);
+            }
+            ok = false;
+        } else if (args.length == 1) {
+            ok = defineLinda(args[0]);
+            if (!ok) {
+                file = true;
+                readFromFile(args[0]);
+            }
+        } else if (args.length == 0) {
+            linda = new CentralisedLindaBase();
+        }
+        if (ok) {      
             Scanner scanner = new Scanner(System.in);
             boolean continueLoop = true;
             while (continueLoop) {
@@ -55,6 +76,7 @@ public class Instrumentation {
             }
             scanner.close();
         }
+        
         System.exit(0); // pour arreter tous les threads
     }
 
@@ -97,10 +119,12 @@ public class Instrumentation {
                 System.out.println(ANSI_MAGENTA + "A" + ANSI_YELLOW + "u " + ANSI_MAGENTA + "r" + ANSI_YELLOW + "e" + ANSI_MAGENTA + "v" + ANSI_YELLOW + "o" + ANSI_MAGENTA + "i" + ANSI_YELLOW + "r" + ANSI_MAGENTA + " !" + ANSI_RESET);
                 return false;
             case "ep" :
-                System.out.println("Il y a actuellement " + linda.getNbReadBlocked() + " read(s) blocké(s) et "+ linda.getNbTakeBlocked() + " take(s) blocké(s).");
+                if (!realName.equals("basique"))
+                    System.out.println("Il y a actuellement " + linda.getNbReadBlocked() + " read(s) blocké(s) et "+ linda.getNbTakeBlocked() + " take(s) blocké(s).");
                 break;
-                case "ef" :
-                System.out.println("Il y a actuellement " + linda.getNbWriteWaiting() + " write en attente et "+ linda.getNbTakeWaiting() + " take en attente.");
+            case "ef" :
+                if (!realName.equals("basique"))
+                    System.out.println("Il y a actuellement " + linda.getNbWriteWaiting() + " write en attente et "+ linda.getNbTakeWaiting() + " take en attente.");
                 break;
             case "p" :
                 printListTuple();
@@ -108,7 +132,7 @@ public class Instrumentation {
             case "n" :
                 System.out.println(linda.getNbTuples());
                 break;
-                default :
+            default :
                 invalid("Commande non reconnue.");
                 return true;
             }
@@ -138,7 +162,7 @@ public class Instrumentation {
             case "ta" :
                 methodName= "takeAll";
                 break;
-                case "tt" :
+            case "tt" :
                 methodName= "tryTake";
                 break;
             case "s" :
@@ -243,7 +267,7 @@ public class Instrumentation {
             printResult(time);
         }
         catch (IOException e) {
-            System.out.println(ANSI_RED + "Le fichier n'a pas pu être lu." + ANSI_RESET);
+            System.out.println(ANSI_RED + "Impossible de lire ce fichier" + ANSI_RESET);
             e.printStackTrace();
         }
     }
@@ -256,7 +280,7 @@ public class Instrumentation {
                 System.out.println("ligne " + i + " : " + invalidMessages.get(i));
             }
         } else {
-            System.out.print("Aucune opération invalide !");
+            System.out.print("Aucune opération invalide !" + ANSI_RESET);
         }
         System.out.println(ANSI_BLUE +  "\nTemps d'execution : " + time + " ms." + ANSI_RESET);
     }
@@ -288,5 +312,31 @@ public class Instrumentation {
         } catch (NumberFormatException e) {
             invalid();
         }
+    }
+
+    private static boolean defineLinda(String lindaName) {
+        boolean res = true;
+        switch (lindaName) {
+            case "p" :
+                linda = new CentralisedLindaPar();
+                realName = "parallèle";
+                break;
+            case "c" :
+                linda = new CentralisedLindaCache();
+                realName = "cache";
+                break;
+            case "m" :
+                linda = new linda.server.LindaClient("//localhost:4000/LindaServer");
+                //Linda linda1 = new linda.server.LindaClient("//localhost:4002/LindaServer");
+                realName = "multi-serveur";
+                break;
+            default:
+                linda = new CentralisedLindaBase();
+                if (!lindaName.equals("b")) {
+                    res = false;
+                }
+        }
+        System.out.println(ANSI_MAGENTA + "La version de linda est : " + realName + ANSI_RESET);
+        return res;
     }
 }

@@ -1,6 +1,0 @@
-Cas ajout d'un searcher : on crée dans le manager un eventregister 
-qui ajoutera 1 au nombre de searcher des qu'un searcher sera créé.
-- Création d'un tuple spécifique au nom du manager associé.
-
-
-

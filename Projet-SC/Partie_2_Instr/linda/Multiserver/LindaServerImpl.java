@@ -11,17 +11,17 @@ import linda.Linda.eventMode;
 import linda.Linda.eventTiming;
 import linda.InternalCallback;
 import linda.Tuple;
-import linda.shm.CentralizedLinda;
+import linda.shm.CentralisedLindaMultiServ;
 
 public class LindaServerImpl extends UnicastRemoteObject implements LindaServer {
     
-    private CentralizedLinda linda;
+    private CentralisedLindaMultiServ linda;
     private LindaServer ldNextServ;
     private static Integer nbresServer;
     private Integer port;
     
     protected LindaServerImpl(Integer port) throws RemoteException {
-        this.linda = new linda.shm.CentralizedLinda();
+        this.linda = new CentralisedLindaMultiServ();
         this.port = port;
     }
     

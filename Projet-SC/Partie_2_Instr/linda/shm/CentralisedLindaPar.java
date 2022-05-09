@@ -12,8 +12,7 @@ import linda.Callback;
 import linda.Linda;
 import linda.InternalCallback;
 
-/** Shared memory implementation of Linda. */
-public class CentralizedLinda extends LindaInstru {
+public class CentralisedLindaPar extends LindaInstru {
 
 	private Boolean timerLaunched;
 	private Boolean timeout;
@@ -25,9 +24,9 @@ public class CentralizedLinda extends LindaInstru {
 	private Condition canTake;
 	private Condition canWrite;
 
-	public CentralizedLinda() {
+	public CentralisedLindaPar() {
 		super();
-		timerLaunched = false;
+        timerLaunched = false;
 		timeout = false;
 		writing = false;
 		taking = false;
@@ -523,3 +522,4 @@ public class CentralizedLinda extends LindaInstru {
 		System.out.println(prefix + " On entre dans debug !");
 	}
 }
+

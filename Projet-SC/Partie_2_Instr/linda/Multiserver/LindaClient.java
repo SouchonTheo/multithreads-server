@@ -9,13 +9,14 @@ import java.util.Collection;
 import linda.Callback;
 import linda.Linda;
 import linda.Tuple;
+import linda.shm.LindaInstru;
 
 /**
  * Client part of a client/server implementation of Linda.
  * It implements the Linda interface and propagates everything to the server it
  * is connected to.
  */
-public class LindaClient implements Linda {
+public class LindaClient extends LindaInstru {
 
     private LindaServer lindaimpl;
 
