@@ -24,6 +24,14 @@ public class MultiServer {
         }
     }
 
+    public void startServeur(int nbServer) {
+        ServerStart ss;
+        for (int i = 0; i < nbServer; i++) {
+            ss = new ServerStart(i);
+            ss.start();
+        }
+    }
+
     private static class ServerStart extends Thread {
 
         protected Integer id;

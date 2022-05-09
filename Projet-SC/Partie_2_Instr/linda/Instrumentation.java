@@ -314,6 +314,14 @@ public class Instrumentation {
         }
     }
 
+
+    private static class ServersCreation extends Thread {
+        public void run() {
+            (new MultiServer()).startServeur(3);
+        }
+    }
+
+
     private static boolean defineLinda(String lindaName) {
         boolean res = true;
         switch (lindaName) {
@@ -326,6 +334,8 @@ public class Instrumentation {
                 realName = "cache";
                 break;
             case "m" :
+                ServersCreation scThread;
+                scThread.start();
                 linda = new linda.Multiserver.LindaClient("//localhost:4000/LindaServer");
                 //Linda linda1 = new linda.server.LindaClient("//localhost:4002/LindaServer");
                 realName = "multi-serveur";
