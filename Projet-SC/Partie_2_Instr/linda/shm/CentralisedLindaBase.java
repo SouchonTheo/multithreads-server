@@ -2,9 +2,7 @@ package linda.shm;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Vector;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -182,7 +180,8 @@ public class CentralisedLindaBase extends LindaInstru {
 		monitor.lock();
 		// On collecte tous les tuples correspondant au template
 		Collection<Tuple> collectionTuples = new Vector<Tuple>();
-		Iterator<Tuple> iterator = this.listTuples.iterator();
+		Vector<Tuple> copy = (Vector<Tuple>) this.listTuples.clone();
+		Iterator<Tuple> iterator = copy.iterator();
 		Tuple ret = null;
 		while (iterator.hasNext()) {
 			ret = iterator.next();

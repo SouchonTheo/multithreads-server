@@ -185,7 +185,8 @@ public class CentralizedLinda implements Linda {
 		monitor.lock();
 		// On collecte tous les tuples correspondant au template
 		Collection<Tuple> collectionTuples = new Vector<Tuple>();
-		Iterator<Tuple> iterator = this.listTuples.iterator();
+		Vector<Tuple> copy = (Vector<Tuple>) this.listTuples.clone();
+		Iterator<Tuple> iterator = copy.iterator();
 		Tuple ret = null;
 		while (iterator.hasNext()) {
 			ret = iterator.next();
@@ -196,6 +197,7 @@ public class CentralizedLinda implements Linda {
 		}
 		monitor.unlock();
 		return collectionTuples;
+	}
 	}
 
 	@Override
