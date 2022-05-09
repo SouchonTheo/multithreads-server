@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Vector;
 
-import linda.server.LindaClient;
+import linda.Multiserver.LindaClient;
 import linda.shm.CentralisedLindaBase;
 import linda.shm.CentralisedLindaCache;
 import linda.shm.CentralisedLindaPar;
@@ -326,7 +326,7 @@ public class Instrumentation {
                 realName = "cache";
                 break;
             case "m" :
-                linda = new linda.server.LindaClient("//localhost:4000/LindaServer");
+                linda = new linda.Multiserver.LindaClient("//localhost:4000/LindaServer");
                 //Linda linda1 = new linda.server.LindaClient("//localhost:4002/LindaServer");
                 realName = "multi-serveur";
                 break;

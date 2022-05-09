@@ -1,4 +1,4 @@
-package linda.server;
+package linda.Multiserver;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
