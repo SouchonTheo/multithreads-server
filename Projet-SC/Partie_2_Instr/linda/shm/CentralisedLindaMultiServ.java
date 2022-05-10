@@ -1,5 +1,6 @@
 package linda.shm;
 
+import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -15,10 +16,7 @@ import linda.InternalCallback;
 
 public class CentralisedLindaMultiServ extends LindaInstru {
     
-	private Vector<Tuple> listTuples;
-	private Vector<InternalCallback> readers;
-	private Vector<InternalCallback> takers;
-	private ReentrantLock monitor;
+	
 	private Boolean timerLaunched;
 	private Boolean timeout;
 	private Boolean writing;
@@ -32,7 +30,8 @@ public class CentralisedLindaMultiServ extends LindaInstru {
 	private Condition canTake;
 	private Condition canWrite;
 
-	public CentralisedLindaMultiServ() {
+	public CentralisedLindaMultiServ() throws RemoteException {
+		super();
 		listTuples = new Vector<Tuple>();
 		readers = new Vector<InternalCallback>();
 		takers = new Vector<InternalCallback>();

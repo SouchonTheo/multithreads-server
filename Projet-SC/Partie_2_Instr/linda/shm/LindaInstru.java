@@ -1,5 +1,7 @@
 package linda.shm;
 
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Vector;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -7,7 +9,7 @@ import linda.InternalCallback;
 import linda.Linda;
 import linda.Tuple;
 
-public abstract class LindaInstru implements Linda {
+public abstract class LindaInstru extends UnicastRemoteObject implements Linda {
     
     protected Vector<Tuple> listTuples;
 	protected Vector<InternalCallback> readers;
@@ -17,7 +19,7 @@ public abstract class LindaInstru implements Linda {
 	protected int nbTakeWaiting;
 	protected int nbWriteWaiting;
 
-	protected LindaInstru () {
+	protected LindaInstru () throws RemoteException {
 		listTuples = new Vector<Tuple>();
 		readers = new Vector<InternalCallback>();
 		takers = new Vector<InternalCallback>();
