@@ -318,13 +318,14 @@ public class Instrumentation {
 
     private static class MultiServersCreation extends Thread {
         public void run() {
-            (new MultiServer()).startServeur(3);
+            MultiServer server = new MultiServer(3);
+            server.startServeur();
         }
     }
 
     private static class CacheServersCreation extends Thread {
         public void run() {
-            linda.Cache.LindaServer.startServeur();
+            //linda.Cache.LindaServer.startServeur();
         }
     }
 
@@ -339,12 +340,18 @@ public class Instrumentation {
             case "c" :
                 CacheServersCreation sccThread = new CacheServersCreation();
                 sccThread.start();
-                linda = new linda.Cache.LindaClient("//localhost:4000/LindaServer");
+                //linda = new linda.Cache.LindaClient("//localhost:4000/LindaServer");
                 realName = "cache";
                 break;
-            case "m" :
+                case "m" :
                 MultiServersCreation scThread = new MultiServersCreation();
                 scThread.start();
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
                 linda = new linda.Multiserver.LindaClient("//localhost:4000/LindaServer");
                 //Linda linda1 = new linda.server.LindaClient("//localhost:4002/LindaServer");
                 realName = "multi-serveur";

@@ -7,6 +7,10 @@ public class MultiServer {
 
     private static int nbresServer;
 
+    public MultiServer(int nbS) {
+        nbresServer = nbS;
+    }
+
     public static void init(int nbS) {
         nbresServer = nbS;
     }
@@ -24,9 +28,9 @@ public class MultiServer {
         }
     }
 
-    public void startServeur(int nbServer) {
+    public void startServeur() {
         ServerStart ss;
-        for (int i = 0; i < nbServer; i++) {
+        for (int i = 0; i < nbresServer; i++) {
             ss = new ServerStart(i);
             ss.start();
         }

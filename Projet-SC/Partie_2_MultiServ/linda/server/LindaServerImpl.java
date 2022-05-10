@@ -19,7 +19,7 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     private LindaServer ldNextServ;
     private static Integer nbresServer;
     private Integer port;
-    
+
     protected LindaServerImpl(Integer port) throws RemoteException {
         this.linda = new linda.shm.CentralizedLinda();
         this.port = port;
