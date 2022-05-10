@@ -1,5 +1,6 @@
 package linda.shm;
 
+import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -24,7 +25,7 @@ public class CentralisedLindaPar extends LindaInstru {
 	private Condition canTake;
 	private Condition canWrite;
 
-	public CentralisedLindaPar() {
+	public CentralisedLindaPar() throws RemoteException {
 		super();
         timerLaunched = false;
 		timeout = false;

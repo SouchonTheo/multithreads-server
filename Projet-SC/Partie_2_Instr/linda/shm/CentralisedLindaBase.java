@@ -1,5 +1,6 @@
 package linda.shm;
 
+import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Vector;
@@ -14,7 +15,7 @@ import linda.InternalCallback;
 
 public class CentralisedLindaBase extends LindaInstru {
 
-	public CentralisedLindaBase() {
+	public CentralisedLindaBase() throws RemoteException {
         super();
 		listTuples = new Vector<Tuple>();
 		readers = new Vector<InternalCallback>();

@@ -14,13 +14,14 @@ import linda.Callback;
 import linda.Linda;
 import linda.Tuple;
 import linda.shm.CentralisedLindaCache;
+import linda.shm.LindaInstru;
 
 /**
  * Client part of a client/server implementation of Linda.
  * It implements the Linda interface and propagates everything to the server it
  * is connected to.
  */
-public class LindaClient extends UnicastRemoteObject implements Linda, LindaClientInterface {
+public class LindaClient extends LindaInstru implements LindaClientInterface {
 
     private CentralisedLindaCache cache = new CentralisedLindaCache();
 
