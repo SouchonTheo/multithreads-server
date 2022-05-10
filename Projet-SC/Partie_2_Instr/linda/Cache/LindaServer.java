@@ -138,7 +138,7 @@ public class LindaServer extends UnicastRemoteObject implements LindaServerInter
         try {
             LindaServer server = new LindaServer();
             LocateRegistry.createRegistry(port);
-            URL1 = "//" + InetAddress.getLocalHost().getHostName() + ":" + port + "/LindaServer";
+            URL1 = "//localhost:4000/LindaServer";
             Naming.rebind(URL1, server);
             System.out.println("Le serveur est démarré sur " + URL1);
         } catch (RemoteException e) {
@@ -154,7 +154,7 @@ public class LindaServer extends UnicastRemoteObject implements LindaServerInter
         try {
             LindaServer server = new LindaServer();
             LocateRegistry.createRegistry(port);
-            URL1 = "//" + InetAddress.getLocalHost().getHostName() + ":" + port + "/LindaServer";
+            URL1 = "//localhost:4000/LindaServer";
             Naming.rebind(URL1, server);
             System.out.println("Le serveur est démarré sur " + URL1);
         } catch (RemoteException e) {

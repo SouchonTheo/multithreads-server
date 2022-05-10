@@ -5,13 +5,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Vector;
 
-import linda.Multiserver.LindaClient;
-import linda.Multiserver.MultiServer;
 import linda.shm.CentralisedLindaBase;
 import linda.shm.CentralisedLindaCache;
 import linda.shm.CentralisedLindaPar;
@@ -36,7 +35,7 @@ public class Instrumentation {
     private static int currentLine = 0;
     private static List<Integer> invalidLines;
     private static List<String> invalidMessages;
-    private static LindaInstru linda;
+    private static LindaInstru lindaIn;
     private static String realName = "basique";
 
 
@@ -63,7 +62,11 @@ public class Instrumentation {
                 readFromFile(args[0]);
             }
         } else if (args.length == 0) {
-            linda = new CentralisedLindaBase();
+            try {
+                lindaIn = new CentralisedLindaBase();
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
         }
         if (ok) {      
             Scanner scanner = new Scanner(System.in);
@@ -121,17 +124,17 @@ public class Instrumentation {
                 return false;
             case "ep" :
                 if (!realName.equals("basique"))
-                    System.out.println("Il y a actuellement " + linda.getNbReadBlocked() + " read(s) blocké(s) et "+ linda.getNbTakeBlocked() + " take(s) blocké(s).");
+                    System.out.println("Il y a actuellement " + lindaIn.getNbReadBlocked() + " read(s) blocké(s) et "+ lindaIn.getNbTakeBlocked() + " take(s) blocké(s).");
                 break;
             case "ef" :
                 if (!realName.equals("basique"))
-                    System.out.println("Il y a actuellement " + linda.getNbWriteWaiting() + " write en attente et "+ linda.getNbTakeWaiting() + " take en attente.");
+                    System.out.println("Il y a actuellement " + lindaIn.getNbWriteWaiting() + " write en attente et "+ lindaIn.getNbTakeWaiting() + " take en attente.");
                 break;
             case "p" :
                 printListTuple();
                 break;
             case "n" :
-                System.out.println(linda.getNbTuples());
+                System.out.println(lindaIn.getNbTuples());
                 break;
             default :
                 invalid("Commande non reconnue.");
@@ -182,7 +185,7 @@ public class Instrumentation {
                 }        
                 Method method = Linda.class.getMethod(methodName, Tuple.class);
                 Integer nbLoop = words.length == 3 ? Integer.parseInt(words[2]) : 1;
-                LaunchAction thread = new LaunchAction(linda, method, t, nbLoop, file);
+                LaunchAction thread = new LaunchAction(lindaIn, method, t, nbLoop, file);
                 thread.start();
             } catch (OutOfMemoryError e) {
                 invalid("Trop de threads démarrés. Mémoire maximale de la JVM atteinte.");
@@ -229,7 +232,7 @@ public class Instrumentation {
 
 
     private static void printListTuple() {
-        Vector<Tuple> vector = linda.getListTuple();
+        Vector<Tuple> vector = lindaIn.getListTuple();
         for (Tuple t : vector) {
             System.out.print(t+ "  ");
         }
@@ -315,49 +318,32 @@ public class Instrumentation {
         }
     }
 
-
-    private static class MultiServersCreation extends Thread {
-        public void run() {
-            MultiServer server = new MultiServer(3);
-            server.startServeur();
-        }
-    }
-
-    private static class CacheServersCreation extends Thread {
-        public void run() {
-            //linda.Cache.LindaServer.startServeur();
-        }
-    }
-
-
     private static boolean defineLinda(String lindaName) {
         boolean res = true;
         switch (lindaName) {
             case "p" :
-                linda = new CentralisedLindaPar();
+                try {
+                    lindaIn = new CentralisedLindaPar();
+                } catch (RemoteException e1) {
+                    e1.printStackTrace();
+                }
                 realName = "parallèle";
                 break;
             case "c" :
-                CacheServersCreation sccThread = new CacheServersCreation();
-                sccThread.start();
-                //linda = new linda.Cache.LindaClient("//localhost:4000/LindaServer");
+                linda.Cache.LindaServer.startServer();
+                try {
+                    lindaIn = new linda.Cache.LindaClient("//localhost:4000/LindaServer");
+                } catch (RemoteException e1) {
+                    e1.printStackTrace();
+                }
                 realName = "cache";
                 break;
-                case "m" :
-                MultiServersCreation scThread = new MultiServersCreation();
-                scThread.start();
+            default:
                 try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
+                    lindaIn = new CentralisedLindaBase();
+                } catch (RemoteException e) {
                     e.printStackTrace();
                 }
-                linda = new linda.Multiserver.LindaClient("//localhost:4000/LindaServer");
-                //Linda linda1 = new linda.server.LindaClient("//localhost:4002/LindaServer");
-                realName = "multi-serveur";
-                break;
-            default:
-                linda = new CentralisedLindaBase();
                 if (!lindaName.equals("b")) {
                     res = false;
                 }
