@@ -11,6 +11,7 @@ import java.util.Scanner;
 import java.util.Vector;
 
 import linda.Multiserver.LindaClient;
+import linda.Multiserver.MultiServer;
 import linda.shm.CentralisedLindaBase;
 import linda.shm.CentralisedLindaCache;
 import linda.shm.CentralisedLindaPar;

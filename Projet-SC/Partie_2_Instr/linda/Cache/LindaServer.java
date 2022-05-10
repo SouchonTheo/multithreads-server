@@ -1,4 +1,4 @@
-package linda.server;
+package linda.Cache;
 
 import java.net.InetAddress;
 import java.rmi.Naming;
@@ -12,17 +12,17 @@ import java.util.ArrayList;
 
 import linda.Linda.eventMode;
 import linda.Linda.eventTiming;
+import linda.shm.CentralisedLindaCache;
 import linda.Tuple;
-import linda.shm.CentralizedLinda;
 
 public class LindaServer extends UnicastRemoteObject implements LindaServerInterface {
 
-    private CentralizedLinda linda;
+    private CentralisedLindaCache linda;
     private List<LindaClientInterface> listeClient = new ArrayList<LindaClientInterface>();
     private ReentrantLock monitor;
 
     protected LindaServer() throws RemoteException {
-        this.linda = new linda.shm.CentralizedLinda();
+        this.linda = new CentralisedLindaCache();
         monitor = new ReentrantLock();
     }
 

@@ -1,4 +1,4 @@
-package linda.server;
+package linda.Cache;
 
 import java.net.MalformedURLException;
 import java.rmi.Naming;
@@ -13,7 +13,7 @@ import java.rmi.server.UnicastRemoteObject;
 import linda.Callback;
 import linda.Linda;
 import linda.Tuple;
-import linda.shm.CentralizedLinda;
+import linda.shm.CentralisedLindaCache;
 
 /**
  * Client part of a client/server implementation of Linda.
@@ -22,7 +22,7 @@ import linda.shm.CentralizedLinda;
  */
 public class LindaClient extends UnicastRemoteObject implements Linda, LindaClientInterface {
 
-    private CentralizedLinda cache = new CentralizedLinda();
+    private CentralisedLindaCache cache = new CentralisedLindaCache();
 
     private LindaServerInterface lindaimpl;
 

@@ -1,4 +1,4 @@
-package linda.server;
+package linda.Cache;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
