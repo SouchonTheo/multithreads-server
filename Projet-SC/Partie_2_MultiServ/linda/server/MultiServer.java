@@ -50,7 +50,6 @@ public class MultiServer {
                 nextURL = "//" + InetAddress.getLocalHost().getHostName() + 
                     ":" + (initialPort + ((id + 1)%nbresServer)) + "/LindaServer";
             } catch (UnknownHostException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
             LindaServerImpl.ServerStart(url, nextURL, initialPort + id, nbresServer);
