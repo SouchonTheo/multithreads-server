@@ -339,7 +339,7 @@ public class Instrumentation {
             case "c" :
                 CacheServersCreation sccThread;
                 sccThread.start();
-                linda = new linda.Cache.LindaClient();
+                linda = new linda.Cache.LindaClient("//localhost:4000/LindaServer");
                 realName = "cache";
                 break;
             case "m" :
