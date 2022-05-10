@@ -337,13 +337,13 @@ public class Instrumentation {
                 realName = "parallèle";
                 break;
             case "c" :
-                CacheServersCreation sccThread;
+                CacheServersCreation sccThread = new CacheServersCreation();
                 sccThread.start();
                 linda = new linda.Cache.LindaClient("//localhost:4000/LindaServer");
                 realName = "cache";
                 break;
             case "m" :
-                MultiServersCreation scThread;
+                MultiServersCreation scThread = new MultiServersCreation();
                 scThread.start();
                 linda = new linda.Multiserver.LindaClient("//localhost:4000/LindaServer");
                 //Linda linda1 = new linda.server.LindaClient("//localhost:4002/LindaServer");
